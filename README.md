@@ -11,7 +11,7 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
 * Enrique Ortiz
 
 
-#### Descripción de los datos
+### Descripción de los datos
 
 La base de datos con la que trabajamos contiene información respecto a las inspecciones 
 a restaurantes y a otros establecimientos de comida en la ciudad de Chicago del primero
@@ -37,7 +37,7 @@ conjunto de datos:
 * Violaciones al reglamento
 
 
-#### Pregunta analítica a contestar con el modelo.
+### Pregunta analítica a contestar con el modelo.
 
 La pregunta a contestar es la siguiente: 
 
@@ -47,6 +47,6 @@ Es decir, este es un problema de clasificación en donde intentaremos determinar
 características generales de un establecimiento, si podrá o no cumplir con los estándares de salubridad
 requeridos para pasar una inspección.
 
-#### Frecuencia de actualización de los datos.
+### Frecuencia de actualización de los datos.
 
 Los datos se actualizan diariamente. 
