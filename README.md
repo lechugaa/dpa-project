@@ -49,4 +49,5 @@ requeridos para pasar una inspección.
 
 ### Frecuencia de actualización de los datos.
 
-Los datos se actualizan diariamente. 
+Los datos se actualizan diariamente. Sin embargo, los _pipelines_ de este proyecto corren de forma
+semanal.
