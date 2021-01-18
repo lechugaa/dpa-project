@@ -5,10 +5,10 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
 
 **Proyecto Realizado por:**
 
-* José Antonio Lechuga
+* José Antonio Lechuga Rivera
 * Carlos Heredia
-* Mario Heredia
-* Enrique Ortiz
+* Mario Arturo Heredia Trejo
+* Enrique Ortiz Casillas
 
 
 ### Descripción de los datos
