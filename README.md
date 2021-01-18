@@ -3,12 +3,12 @@
 
 Un proyecto de punta a punta realizado en la materia de _Data Product Architecture_. 
 
-**Proyecto Realizado por:**
+### Integrantes del equipo:
 
 * José Antonio Lechuga Rivera
 * Carlos Heredia
 * Mario Arturo Heredia Trejo
-* Enrique Ortiz Casillas
+* [Enrique Ortiz Casillas](https://github.com/EnriqueOrtiz27)
 
 
 ### Descripción de los datos
