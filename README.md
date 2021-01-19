@@ -6,8 +6,8 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
 ### Integrantes del equipo:
 
 * [José Antonio Lechuga Rivera](https://github.com/lechugaa)
-* Carlos Heredia
-* Mario Arturo Heredia Trejo
+* Carlos Bautista
+* [Mario Arturo Heredia Trejo](https://github.com/mhnk77)
 * [Enrique Ortiz Casillas](https://github.com/EnriqueOrtiz27)
 
 
