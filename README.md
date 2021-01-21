@@ -3,6 +3,8 @@
 
 Un proyecto de punta a punta realizado en la materia de _Data Product Architecture_. 
 
+## Proyecto
+
 ### Integrantes del equipo:
 
 * [José Antonio Lechuga Rivera](https://github.com/lechugaa)
@@ -51,3 +53,51 @@ requeridos para pasar una inspección.
 
 Los datos se actualizan diariamente. Sin embargo, los _pipelines_ de este proyecto corren de forma
 semanal.
+
+## Configuración
+
+Este proyecto está programado y probado usando python 3.7.4. En el directorio raíz se encuentra
+un archivo llamado **requirements.txt** que contiene todas las dependencias necesarias para ejecutar
+satisfactoriamente el proyecto. Para instalarlas usar el siguiente comando:
+
+```
+pip install -r requirements.txt
+```
+
+## Estructura del proyecto
+
+```
+├── README.md          <- The top-level README for developers using this project.
+├── conf
+│   ├── base           <- Space for shared configurations like parameters
+│   └── local          <- Space for local configurations, usually credentials
+│
+├── docs               <- Space for Sphinx documentation
+│
+├── notebooks          <- Jupyter notebooks.
+│   ├── legacy         <- Jupyter notebook drafts
+│   ├── shapefiles     <- Shapefiles and geojson required for graphing purposes
+│   └── eda.ipynb      <- Iniital EDA and GEDA for project
+│   
+├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+│
+├── results            <- Intermediate analysis as HTML, PDF, LaTeX, etc.
+│
+├── requirements.txt   <- The requirements file
+│
+├── .gitignore         <- Avoids uploading data, credentials, outputs, system files etc
+│
+├── infrastructure
+├── sql
+├── setup.py
+└── src                <- Source code for use in this project.
+    ├── __init__.py    <- Makes src a Python module
+    │
+    ├── utils      <- Functions used across the project
+    │
+    │
+    ├── etl       <- Scripts to transform data from raw to intermediate
+    │
+    │
+    └── pipeline
+```
