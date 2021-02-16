@@ -57,9 +57,9 @@ semanal.
 ## Configuración
 
 Este proyecto está programado y probado usando python 3.7.4. En el directorio raíz se encuentra
-un archivo llamado `requirements.txt que contiene todas las dependencias necesarias para ejecutar
+un archivo llamado `requirements.txt` que contiene todas las dependencias necesarias para ejecutar
 satisfactoriamente el proyecto. Para instalarlas usar el siguiente comando:
-``
+
 ```
 pip install -r requirements.txt
 ```
