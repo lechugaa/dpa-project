@@ -1,5 +1,9 @@
 from datetime import time
 
+from sodapy import Socrata
+from src.utils.general import get_s3_credentials, get_chicago_api_token
+
+
 def get_client(token):
     """
     Regresa un cliente que se puede conectar a la API de inspecciones de establecimiento
@@ -7,7 +11,8 @@ def get_client(token):
     :param token: token de API
     :return: cliente de API
     """
-    pass
+    return Socrata("data.cityofchicago.org", token)
+
 
 def ingesta_inicial(api_client, limit):
     """
@@ -19,6 +24,7 @@ def ingesta_inicial(api_client, limit):
     """
     pass
 
+
 def ingesta_consecutiva(api_client, fetch_date, limit=1000):
     """
     Recibe como parámetros el cliente con el que nos podemos comunicar con la API,
@@ -29,8 +35,8 @@ def ingesta_consecutiva(api_client, fetch_date, limit=1000):
     :param limit: número de registros que buscamos obtener
     :return: lista de los elementos que la API regresó
     """
-
     pass
+
 
 def get_s3_resource():
     """
@@ -39,6 +45,7 @@ def get_s3_resource():
     :return: Resource de S3 para poder guardar datos en el bucket
     """
     pass
+
 
 def guardar_ingesta(s3_bucket_name, path, data):
     """

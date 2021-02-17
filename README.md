@@ -56,6 +56,8 @@ semanal.
 
 ## Configuración
 
+### Python y requerimientos
+
 Este proyecto está programado y probado usando python 3.7.4. En el directorio raíz se encuentra
 un archivo llamado `requirements.txt` que contiene todas las dependencias necesarias para ejecutar
 satisfactoriamente el proyecto. Para instalarlas usar el siguiente comando:
@@ -64,8 +66,25 @@ satisfactoriamente el proyecto. Para instalarlas usar el siguiente comando:
 pip install -r requirements.txt
 ```
 
+### Notebooks
+
 Para poder correr los Jupyter notebooks se debe adicionar el csv de datos de inspecciones de la 
 ciudad de Chicago con el nombre `Food_Inspections.csv` dentro del directorio `data`.
+
+### Credenciales de AWS y Chicago Food Inspections API
+Para conectarse programáticamente a AWS y a la API del set de datos debe de existir un archivo de configuraciones en 
+la ruta `conf/local/credentials.yaml`. La estructura del este archivo debe ser la siguiente:
+
+```
+---
+s3:
+  aws_access_key_id: SU_AWS_ACCESS_KEY_ID
+  aws_secret_access_key: SU_AWS_SECRET_ACCESS_KEY
+  
+chicago_api:
+  app_token: SU_APP_TOKEN_DE_CHICAGO_API
+...
+```
 
 ## Estructura del proyecto
 
@@ -76,7 +95,7 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
 ├── conf
 │   ├── base                            <- Space for shared configurations like parameters
 │   └── local                           <- Space for local configurations, usually credentials
-│
+│       └── credentials.yaml            <- Required credentials for connecting to AWS
 ├── data                                <- Space for temporary csv files required for testing and EDA
 │
 ├── docs                                <- Space for Sphinx documentation

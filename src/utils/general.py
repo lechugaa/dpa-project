@@ -26,3 +26,15 @@ def get_s3_credentials(credentials_path):
     s3_credentials = credentials['s3']
 
     return s3_credentials
+
+
+def get_chicago_api_token(credentials_path):
+    """
+   Lee el archivo 'credentials.yaml' que se encuentra en 'conf/local'
+   :param credentials_path: ruta a archivo yaml con credenciales
+   :return: token de Chicago Food Inspections API
+   """
+    credentials = read_yaml_file(credentials_path)
+    chicago_api_token = credentials['chicago_api']['app_token']
+
+    return chicago_api_token
