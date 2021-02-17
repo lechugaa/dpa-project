@@ -72,39 +72,40 @@ ciudad de Chicago con el nombre `Food_Inspections.csv` dentro del directorio `da
 Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipynb`.
 
 ```
-├── README.md          <- The top-level README for developers using this project.
+├── README.md                           <- The top-level README for developers using this project.
 ├── conf
-│   ├── base           <- Space for shared configurations like parameters
-│   └── local          <- Space for local configurations, usually credentials
+│   ├── base                            <- Space for shared configurations like parameters
+│   └── local                           <- Space for local configurations, usually credentials
 │
-├── data               <- Space for temporary csv files required for testing and EDA
+├── data                                <- Space for temporary csv files required for testing and EDA
 │
-├── docs               <- Space for Sphinx documentation
+├── docs                                <- Space for Sphinx documentation
 │
-├── notebooks          <- Jupyter notebooks.
-│   ├── legacy         <- Jupyter notebook drafts
-│   ├── shapefiles     <- Shapefiles and geojson required for graphing purposes
-│   └── eda.ipynb      <- Iniital EDA and GEDA for project
+├── notebooks                           <- Jupyter notebooks.
+│   ├── legacy                          <- Jupyter notebook drafts
+│   ├── shapefiles                      <- Shapefiles and geojson required for graphing purposes
+│   └── eda.ipynb                       <- Iniital EDA and GEDA for project
 │   
-├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+├── references                          <- Data dictionaries, manuals, and all other explanatory materials.
 │
-├── results            <- Intermediate analysis as HTML, PDF, LaTeX, etc.
+├── results                             <- Intermediate analysis as HTML, PDF, LaTeX, etc.
 │
-├── requirements.txt   <- The requirements file
+├── requirements.txt                    <- The requirements file
 │
-├── .gitignore         <- Avoids uploading data, credentials, outputs, system files etc
+├── .gitignore                          <- Avoids uploading data, credentials, outputs, system files etc
 │
 ├── infrastructure
 ├── sql
 ├── setup.py
-└── src                <- Source code for use in this project.
-    ├── __init__.py    <- Makes src a Python module
+└── src                                 <- Source code for use in this project.
+    ├── __init__.py                     <- Makes src a Python module
     │
-    ├── utils      <- Functions used across the project
+    ├── utils                           <- Functions used across the project
+    │   └── general.py                  <- Obtención de credenciales de AWS
     │
-    │
-    ├── etl       <- Scripts to transform data from raw to intermediate
+    ├── etl                             <- Scripts to transform data from raw to intermediate
     │
     │
     └── pipeline
+        └── ingesta_almacenamiento.py   <- ingesta datos desde API y almacenamiento en S3
 ```
