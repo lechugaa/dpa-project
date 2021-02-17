@@ -69,6 +69,8 @@ ciudad de Chicago con el nombre `Food_Inspections.csv` dentro del directorio `da
 
 ## Estructura del proyecto
 
+Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipynb`.
+
 ```
 ├── README.md          <- The top-level README for developers using this project.
 ├── conf
