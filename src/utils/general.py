@@ -19,6 +19,7 @@ def read_yaml_file(yaml_file):
 def get_s3_credentials(credentials_path):
     """
     Lee el archivo 'credentials.yaml' que se encuentra en 'conf/local'
+    :param credentials_path: ruta a archivo yaml con credenciales
     :return: credenciales de aws
     """
     credentials = read_yaml_file(credentials_path)
