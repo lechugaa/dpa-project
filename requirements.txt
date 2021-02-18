@@ -7,10 +7,13 @@ async-generator==1.10
 atomicwrites==1.4.0
 attrs==20.3.0
 autopep8==1.5.4
+awscli==1.19.6
 Babel==2.9.0
 backcall==0.2.0
 black==20.8b1
 bleach==3.2.1
+boto3==1.17.8
+botocore==1.20.6
 certifi==2020.12.5
 cffi==1.14.4
 chardet==4.0.0
@@ -18,13 +21,14 @@ click==7.1.2
 click-plugins==1.1.1
 cligj==0.7.1
 cloudpickle==1.6.0
+colorama==0.4.3
 cryptography==3.3.1
 cycler==0.10.0
 decorator==4.4.2
 defusedxml==0.6.0
 descartes==1.1.0
 diff-match-patch==20200713
-docutils==0.16
+docutils==0.15.2
 entrypoints==0.3
 Fiona==1.8.18
 flake8==3.8.4
@@ -42,6 +46,7 @@ isort==5.7.0
 jedi==0.17.2
 jeepney==0.6.0
 Jinja2==2.11.2
+jmespath==0.10.0
 jsonschema==3.2.0
 jupyter==1.0.0
 jupyter-client==6.1.11
@@ -78,6 +83,7 @@ prometheus-client==0.9.0
 prompt-toolkit==3.0.10
 psutil==5.8.0
 ptyprocess==0.7.0
+pyasn1==0.4.8
 pycodestyle==2.6.0
 pycparser==2.20
 pydocstyle==5.1.1
@@ -97,6 +103,7 @@ python-jsonrpc-server==0.4.0
 python-language-server==0.36.2
 pytz==2020.5
 pyxdg==0.27
+PyYAML==5.3.1
 pyzmq==21.0.1
 QDarkStyle==2.8.1
 QtAwesome==1.0.2
@@ -105,6 +112,8 @@ QtPy==1.9.0
 regex==2020.11.13
 requests==2.25.1
 rope==0.18.0
+rsa==4.5
+s3transfer==0.3.4
 scipy==1.6.0
 seaborn==0.11.1
 SecretStorage==3.3.0
@@ -112,6 +121,7 @@ Send2Trash==1.5.0
 Shapely==1.7.1
 six==1.15.0
 snowballstemmer==2.0.0
+sodapy==2.1.0
 sortedcontainers==2.3.0
 Sphinx==3.4.3
 sphinxcontrib-applehelp==1.0.2
