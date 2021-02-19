@@ -4,6 +4,7 @@ from sodapy import Socrata
 from src.utils.general import get_s3_credentials, get_chicago_api_token
 from io import StringIO
 import pandas as pd
+import pickle
 
 def get_client(token):
     """
@@ -24,7 +25,7 @@ def ingesta_inicial(api_client, limit = 300000):
     :return: lista de los elementos que la API regresó
     """
     results = api_client.get("4ijn-s7e5", limit=limit)
-    return pd.DataFrame.from_records(results) 
+    return results
 
 def ingesta_consecutiva(api_client, fetch_date, limit=1000):
     """
@@ -60,10 +61,9 @@ def guardar_ingesta(s3_bucket_name, path, data, s3_resource):
     :param path: ruta en el bucket en donde se guardarán los datos
     :param data: datos ingestados en csv
     """
-    #Define buffer to avoid local download
-    csv_buffer = StringIO()
-    data.to_csv(csv_buffer)
+
+    s3_resource.Object(s3_bucket_name, path).put(Body=pickle.dumps(data))
     
-    s3_resource.Object(s3_bucket_name, path).put(Body=csv_buffer.getvalue())
+    #s3_resource.meta.client.upload_file("data_ingesta.pkl", s3_bucket_name, path)
     
     return s3_resource
