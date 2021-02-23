@@ -212,7 +212,7 @@ Ciudad de Chicago
    Adicionalmente, se puede proveer un parámetro `query_date` con un dato de tipo `datetime` para especificar
    la fecha a partir de la cual se quiere recolectar datos. En caso de no suministrarla, como en el ejemplo,
    la función calculará la fecha de 7 días atrás con respecto al día que se ejecuta. Este es el comportamiento
-   buscado para el proyecto por lo qu en general se llamará sin este parámetro.
+   buscado para el proyecto por lo que en general se llamará sin este parámetro.
    
 4. Obtener los recursos de S3 de las credenciales de AWS
     ```
