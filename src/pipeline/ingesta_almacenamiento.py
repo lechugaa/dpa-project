@@ -83,5 +83,3 @@ def guardar_ingesta(bucket_name, bucket_path, data, s3_resource):
 
     s3_resource.Object(bucket_name, bucket_path).put(Body=pickle.dumps(data))
     # s3_resource.meta.client.upload_file("data_ingesta.pkl", s3_bucket_name, path)
-    
-    return s3_resource
