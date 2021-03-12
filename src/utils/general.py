@@ -1,5 +1,6 @@
 import datetime
 import yaml
+import os
 
 
 def read_yaml(credentials_file):
@@ -39,6 +40,27 @@ def get_api_token(credentials_file):
     api_token = credentials['food_inspections']['api_token']
 
     return api_token
+
+
+def get_file_path(historic=False):
+    """
+    Regresa un string con la ruta necesaria para almacenamiento local. El parámetro 'historic'
+    determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
+    agregada a la ruta es la del momento de ejecución de la función. El formato de la fecha usado es %Y-%m-%d
+
+    Ejemplos:
+        historic=True -> return "historic-inspections-2020-02-02.pkl"
+        historic=False -> return "consecutive-inspections-2020-02-02.pkl"
+    :param historic: boolean
+    :return: string
+    """
+    today_string = datetime.datetime.now().strftime("%Y-%m-%d")
+    root_path = os.getcwd()
+
+    if historic:
+        return f"{root_path}/temp/historic-inspections-{today_string}.pkl"
+
+    return f"{root_path}/temp/consecutive-inspections-{today_string}.pkl"
 
 
 def get_upload_path(historic=False):
