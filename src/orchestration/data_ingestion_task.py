@@ -10,14 +10,18 @@ class DataIngestionTask(luigi.Task):
 
     # parameters
     historic = luigi.BoolParameter(default=False)
+    query_date = luigi.DateParameter(default=None)
 
     def run(self):
 
         # getting client for Chicago Food Inspections API
         client = get_client()
 
-        # getting data for historic or continuous ingestion (ternary operator)
-        data = ingesta_inicial(client) if self.historic else ingesta_consecutiva(client)
+        # getting data for historic or continuous ingestion
+        if self.historic:
+            data = ingesta_inicial(client=client, query_date=self.query_date)
+        else:
+            data = ingesta_consecutiva(client=client, query_date=self.query_date)
 
         # writing pickle file
         output_file = open(self.output().path, 'wb')
@@ -25,5 +29,5 @@ class DataIngestionTask(luigi.Task):
         output_file.close()
 
     def output(self):
-        file_path = get_file_path(historic=self.historic)
+        file_path = get_file_path(historic=self.historic, query_date=self.query_date)
         return luigi.local_target.LocalTarget(file_path)

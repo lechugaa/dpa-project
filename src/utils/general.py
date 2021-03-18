@@ -42,28 +42,33 @@ def get_api_token(credentials_file):
     return api_token
 
 
-def get_file_path(historic=False):
+def get_file_path(historic=False, query_date=None):
     """
     Regresa un string con la ruta necesaria para almacenamiento local. El parámetro 'historic'
     determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
     agregada a la ruta es la del momento de ejecución de la función. El formato de la fecha usado es %Y-%m-%d
 
     Ejemplos:
-        historic=True -> return "historic-inspections-2020-02-02.pkl"
-        historic=False -> return "consecutive-inspections-2020-02-02.pkl"
+        historic=True -> return "<project_root>/temp/historic-inspections-2020-02-02.pkl"
+        historic=False -> return "<project_root>/temp/consecutive-inspections-2020-02-02.pkl"
     :param historic: boolean
+    :param query_date: fecha (datetime) relacionada a la obtención de los datos
     :return: string
     """
-    today_string = datetime.datetime.now().strftime("%Y-%m-%d")
+    if query_date is None:
+        date_string = datetime.datetime.now().strftime("%Y-%m-%d")
+    else:
+        date_string = query_date.strftime("%Y-%m-%d")
+
     root_path = os.getcwd()
 
     if historic:
-        return f"{root_path}/temp/historic-inspections-{today_string}.pkl"
+        return f"{root_path}/temp/historic-inspections-{date_string}.pkl"
 
-    return f"{root_path}/temp/consecutive-inspections-{today_string}.pkl"
+    return f"{root_path}/temp/consecutive-inspections-{date_string}.pkl"
 
 
-def get_upload_path(historic=False):
+def get_upload_path(historic=False, query_date=None):
     """
     Regresa un string con la ruta necesaria para almacenamiento en el bucket de S3. El parámetro 'historic'
     determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
@@ -73,11 +78,15 @@ def get_upload_path(historic=False):
         historic=True -> return "ingestion/initial/historic-inspections-2020-02-02.pkl"
         historic=False -> return "ingestion/consecutive/consecutive-inspections-2020-02-02.pkl"
     :param historic: boolean
+    :param query_date: fecha (datetime) relacionada a la obtención de los datos
     :return: string
     """
-    today_string = datetime.datetime.now().strftime("%Y-%m-%d")
+    if query_date is None:
+        date_string = datetime.datetime.now().strftime("%Y-%m-%d")
+    else:
+        date_string = query_date.strftime("%Y-%m-%d")
 
     if historic:
-        return f"ingestion/initial/historic-inspections-{today_string}.pkl"
+        return f"ingestion/initial/historic-inspections-{date_string}.pkl"
 
-    return f"ingestion/consecutive/consecutive-inspections-{today_string}.pkl"
+    return f"ingestion/consecutive/consecutive-inspections-{date_string}.pkl"

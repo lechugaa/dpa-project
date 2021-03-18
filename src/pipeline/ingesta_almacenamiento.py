@@ -17,15 +17,23 @@ def get_client():
     return Socrata("data.cityofchicago.org", token)
 
 
-def ingesta_inicial(client, limit=300000):
+def ingesta_inicial(client, query_date=None, limit=300000):
     """
     Recibe como parámetros el cliente con el que nos podemos comunicar con la API,
     y el límite de registros que queremos obtener al llamar a la API
     :param client: cliente de API
+    :param query_date: fecha tipo datetime a partir de la cual se quieren obtener nuevas observaciones
     :param limit: número de registros que buscamos obtener
     :return: lista de los elementos que la API regresó
     """
-    results = client.get("4ijn-s7e5", limit=limit)
+    if query_date is None:
+        results = client.get("4ijn-s7e5", limit=limit)
+        return results
+
+    query_date = query_date.strftime("%Y-%m-%d")
+    query = f"inspection_date < '{query_date}'"
+    results = client.get("4ijn-s7e5", where=query, limit=limit)
+
     return results
 
 

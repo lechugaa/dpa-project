@@ -11,15 +11,16 @@ class DataS3UploadTask(luigi.Task):
 
     # class attributes
     historic = luigi.BoolParameter(default=False)
+    query_date = luigi.DateParameter(default=None)
 
     def requires(self):
-        return DataIngestionTask(self.historic)
+        return DataIngestionTask(historic=self.historic, query_date=self.query_date)
 
     def run(self):
 
         # obtaining paths
-        file_path = get_file_path(historic=self.historic)
-        upload_path = get_upload_path(historic=self.historic)
+        file_path = get_file_path(historic=self.historic, query_date=self.query_date)
+        upload_path = get_upload_path(historic=self.historic, query_date=self.query_date)
 
         # uploading file
         s3_resource = get_s3_resource()
@@ -33,5 +34,5 @@ class DataS3UploadTask(luigi.Task):
             aws_secret_access_key=s3_credentials['aws_secret_access_key']
         )
 
-        output_path = f"s3://{bucket_name}/{get_upload_path(historic=self.historic)}"
+        output_path = f"s3://{bucket_name}/{get_upload_path(historic=self.historic, query_date=self.query_date)}"
         return luigi.contrib.s3.S3Target(path=output_path, client=client)
