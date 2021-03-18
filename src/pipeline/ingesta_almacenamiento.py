@@ -31,6 +31,10 @@ def ingesta_inicial(client, query_date=None, limit=300000):
         return results
 
     query_date = query_date.strftime("%Y-%m-%d")
+    # el operador < se usa en lugar de <= ya que el comportamiento esperado es que se corra a las 4am esta
+    # tarea con la fecha del día lunes en que se ejecuta y en ese horario todavía no se tienen los datos del mismo
+    # lunes. De esta manera si se pone como fecha un lunes cualquiera en el pasado, el resultado será el mismo que
+    # ejecutarlo ese lunes en cuestión a las 4am
     query = f"inspection_date < '{query_date}'"
     results = client.get("4ijn-s7e5", where=query, limit=limit)
 
@@ -52,13 +56,15 @@ def ingesta_consecutiva(client, query_date=None, limit=1000):
 
     # en caso de que no se alimente un query_date, se genera con delta de días
     if query_date is None:
-        today = datetime.datetime.now()
-        # Por ahora necesitamos un delta de 7 días ya que los lunes a las 4am ya se tienen todos los datos anteriores
-        # a dicho lunes. Esto porque los fines de semana no se hacen inspecciones y el sábado anterior se actualizan los
-        # datos del viernes pasado
-        delta = datetime.timedelta(days=7)
-        query_date = (today - delta)
+        query_date = datetime.datetime.now()
 
+    # Por ahora necesitamos un delta de 7 días ya que los lunes a las 4am ya se tienen todos los datos anteriores
+    # a dicho lunes. Esto porque los fines de semana no se hacen inspecciones y el sábado anterior se actualizan los
+    # datos del viernes pasado
+    delta = datetime.timedelta(days=7)
+    query_date = (query_date - delta)
+
+    # obteniendo en formato de texto la fecha del query
     query_date = query_date.strftime("%Y-%m-%d")
     query = f"inspection_date >= '{query_date}'"
     results = client.get("4ijn-s7e5", where=query, limit=limit)
