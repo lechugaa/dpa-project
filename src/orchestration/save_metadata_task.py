@@ -17,7 +17,7 @@ class SaveMetadataTask(CopyToTable):
     port = credentials['port']
 
     # nombre de tabla de metadatos
-    table = 'metadata'
+    table = 'metatest'
 
     # formato de tabla
     columns = [("col_1", "VARCHAR"),
