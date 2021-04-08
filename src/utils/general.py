@@ -30,6 +30,16 @@ def get_s3_credentials(credentials_file):
     return s3_credentials
 
 
+def get_db_credentials(credentials_file):
+    """
+    Lee el archivo 'credentials.yaml' que se encuentra en 'conf/local'
+    :param credentials_file: ruta a archivo yaml con credenciales
+    :return: credenciales de acceso a base de datos en AWS
+    """
+    credentials = read_yaml(credentials_file)
+    return credentials['data_base']
+
+
 def get_api_token(credentials_file):
     """
     Lee el archivo 'credentials.yaml' que se encuentra en 'conf/local'
