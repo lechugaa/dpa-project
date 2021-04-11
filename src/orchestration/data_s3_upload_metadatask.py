@@ -5,7 +5,7 @@ from src.orchestration.data_s3_upload_task import DataS3UploadTask
 from src.pipeline.ingesta_almacenamiento import generar_metadatos_almacenamiento
 
 
-class IngestionMetadataTask(CopyToTable):
+class UploadMetadaTask(CopyToTable):
 
     # parameters
     historic = luigi.BoolParameter(default=False)
@@ -27,7 +27,7 @@ class IngestionMetadataTask(CopyToTable):
     # formato de tabla
     columns = [("ingestion_date", "DATE"),
                ("historic", "BOOLEAN"),
-               ("file_name", "NVARCHAR")]
+               ("file_name", "VARCHAR(250)")]
 
     def requires(self):
         return DataS3UploadTask(historic=self.historic, query_date=self.query_date)

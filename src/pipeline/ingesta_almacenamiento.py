@@ -126,11 +126,11 @@ def generar_metadatos_almacenamiento(historic=False, query_date=None):
     Función para generar metadata para el task de almacenamiento.
     Regresa la fecha, si fue histórico o no y la ruta del archivo en S3.
     """
-     if query_date is None:
+    if query_date is None:
         upload_date = datetime.datetime.now().strftime("%Y-%m-%d")
     else:
         upload_date = query_date.strftime("%Y-%m-%d")
 
-    upload_path = get_upload_path(historic, upload_date)
+    upload_path = get_upload_path(historic, query_date)
 
     return [(upload_date, historic, upload_path)]
