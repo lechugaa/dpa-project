@@ -2,7 +2,7 @@ import luigi
 import luigi.contrib.s3
 
 from src.pipeline.ingesta_almacenamiento import get_s3_resource
-from src.orchestration.data_ingestion_task import DataIngestionTask
+from src.orchestration.ingestion_metadata_task import IngestionMetadataTask
 from src.utils.general import get_file_path, get_upload_path, get_s3_credentials
 from src.utils.constants import bucket_name
 
@@ -14,7 +14,7 @@ class DataS3UploadTask(luigi.Task):
     query_date = luigi.DateParameter(default=None)
 
     def requires(self):
-        return DataIngestionTask(historic=self.historic, query_date=self.query_date)
+        return IngestionMetadataTask(historic=self.historic, query_date=self.query_date)
 
     def run(self):
 
