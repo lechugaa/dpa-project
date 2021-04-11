@@ -33,8 +33,6 @@ class IngestionMetadataTask(CopyToTable):
         return DataIngestionTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
-        z1 = str(self.x)
-        z2 = str(self.x + self.x)
-        rows = [("test 1", z1), ("test 2", z2)]
+        rows = [("2021-04-11", False, 100, 100.0)]
         for row in rows:
             yield row
