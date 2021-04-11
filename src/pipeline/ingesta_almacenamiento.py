@@ -1,10 +1,13 @@
 import boto3
 import datetime
+import os
+import pandas as pd
 import pickle
 
 
 from sodapy import Socrata
-from src.utils.general import get_s3_credentials, get_api_token
+from src.utils.general import get_s3_credentials, get_api_token, get_file_path
+
 
 
 def get_client():
@@ -97,3 +100,22 @@ def guardar_ingesta(bucket_name, bucket_path, data, s3_resource):
 
     s3_resource.Object(bucket_name, bucket_path).put(Body=pickle.dumps(data))
     # s3_resource.meta.client.upload_file("data_ingesta.pkl", s3_bucket_name, path)
+
+
+def generar_metadatos_ingesta(historic=False, query_date=None):
+
+    path = get_file_path(historic, query_date)
+    ingestion_df = pd.DataFrame.from_dict(path)
+
+    if query_date is None:
+        ingestion_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    else:
+        ingestion_date = query_date.strftime("%Y-%m-%d")
+
+    num_obs = ingestion_df.shape[0]
+    data_size = os.path.getsize(path)
+
+    return [(str(ingestion_date), historic, num_obs, data_size)]
+
+
+

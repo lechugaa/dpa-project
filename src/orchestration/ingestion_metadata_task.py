@@ -2,6 +2,7 @@ import luigi
 from luigi.contrib.postgres import CopyToTable
 from src.utils.general import get_db_credentials
 from src.orchestration.data_ingestion_task import DataIngestionTask
+from src.pipeline.ingesta_almacenamiento import generar_metadatos_ingesta
 
 
 class IngestionMetadataTask(CopyToTable):
@@ -33,6 +34,6 @@ class IngestionMetadataTask(CopyToTable):
         return DataIngestionTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
-        rows = [("2021-04-11", False, 100, 100.0)]
+        rows = generar_metadatos_ingesta(self.historic, self.query_date)
         for row in rows:
             yield row
