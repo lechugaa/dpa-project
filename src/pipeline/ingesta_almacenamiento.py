@@ -6,8 +6,7 @@ import pickle
 
 
 from sodapy import Socrata
-from src.utils.general import get_s3_credentials, get_api_token, get_file_path, load_from_pickle
-
+from src.utils.general import get_s3_credentials, get_api_token, get_file_path, load_from_pickle, get_upload_path
 
 
 def get_client():
@@ -103,7 +102,10 @@ def guardar_ingesta(bucket_name, bucket_path, data, s3_resource):
 
 
 def generar_metadatos_ingesta(historic=False, query_date=None):
-
+    """Función para generar metadata para el ingestion task. 
+    Regresa la fecha, si fue histórica o no, el número de obs. y el espacio
+    en memoria que ocupa el df.
+    """
     path = get_file_path(historic, query_date)
     json_response = load_from_pickle(path)
     ingestion_df = pd.DataFrame.from_dict(json_response)
@@ -119,4 +121,16 @@ def generar_metadatos_ingesta(historic=False, query_date=None):
     return [(str(ingestion_date), historic, num_obs, data_size)]
 
 
+def generar_metadatos_almacenamiento(historic=False, query_date=None):
+    """
+    Función para generar metadata para el task de almacenamiento.
+    Regresa la fecha, si fue histórico o no y la ruta del archivo en S3.
+    """
+     if query_date is None:
+        upload_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    else:
+        upload_date = query_date.strftime("%Y-%m-%d")
 
+    upload_path = get_upload_path(historic, upload_date)
+
+    return [(upload_date, historic, upload_path)]
