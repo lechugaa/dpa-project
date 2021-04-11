@@ -1,4 +1,5 @@
 import datetime
+import pickle
 import yaml
 import os
 
@@ -100,3 +101,26 @@ def get_upload_path(historic=False, query_date=None):
         return f"ingestion/initial/historic-inspections-{date_string}.pkl"
 
     return f"ingestion/consecutive/consecutive-inspections-{date_string}.pkl"
+
+def load_from_pickle(path):
+    """Loads and returns an object from a pickle file in path
+    Parameters:
+    path (string): Path where the pickle file resides
+    Returns:
+    object: Object in pickle file
+    """
+    infile = open(path, 'rb')
+    data = pickle.load(infile)
+    infile.close()
+    return data
+
+
+def save_to_pickle(obj, path):
+    """Saves an object as a pickle file in path
+    Parameters:
+    obj: Object to store in pickle file
+    path (string): Path where the pickle file should reside
+    """
+    outfile = open(path, 'wb')
+    pickle.dump(obj, outfile)
+    outfile.close()

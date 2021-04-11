@@ -6,7 +6,7 @@ import pickle
 
 
 from sodapy import Socrata
-from src.utils.general import get_s3_credentials, get_api_token, get_file_path
+from src.utils.general import get_s3_credentials, get_api_token, get_file_path, load_from_pickle
 
 
 
@@ -105,7 +105,8 @@ def guardar_ingesta(bucket_name, bucket_path, data, s3_resource):
 def generar_metadatos_ingesta(historic=False, query_date=None):
 
     path = get_file_path(historic, query_date)
-    ingestion_df = pd.DataFrame.from_dict(path)
+    json_response = load_from_pickle(path)
+    ingestion_df = pd.DataFrame.from_dict(json_response)
 
     if query_date is None:
         ingestion_date = datetime.datetime.now().strftime("%Y-%m-%d")
