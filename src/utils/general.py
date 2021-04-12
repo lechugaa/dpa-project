@@ -1,7 +1,11 @@
 import datetime
+import pandas as pd
 import pickle
 import yaml
 import os
+
+from src.utils.constants import bucket_name
+from src.pipeline.ingesta_almacenamiento import get_s3_resource
 
 
 def read_yaml(credentials_file):
@@ -124,3 +128,26 @@ def save_to_pickle(obj, path):
     outfile = open(path, 'wb')
     pickle.dump(obj, outfile)
     outfile.close()
+
+def get_pickle_from_s3_to_pandas(historic=False, query_date=None):
+    """
+    Una función para simplificar el proceso de cargar un pickle
+    desde S3 a pandas.
+    :param pickle-path: str
+                        el nombre del pickle incluyendo folder, ej: ingesta/consecutiva/ejemplo.pkl
+    :returns df: pandas dataframe 
+                dataframe con la info del task anterior de Luigi. 
+    """
+    # actualizar la fecha en caso de que no nos las den
+    if query_date is None:
+        query_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    else:
+        date_string = query_date.strftime("%Y-%m-%d")
+
+    client = get_s3_resource()
+    pickle_path = get_upload_path(False, query_date)
+    obj = client.Object(bucket_name, pickle_path).get()['Body'].read()
+    df = pd.DataFrame(pickle.loads(obj))
+    print(f"Successfully loaded Dataframe from {pickle_path}")
+
+    return df
