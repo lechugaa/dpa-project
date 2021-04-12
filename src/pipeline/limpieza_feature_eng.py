@@ -12,7 +12,6 @@ class DataCleaner:
         self.historic = historic
         self.query_date = query_date
         self.prefix = 'clean'
-        self._clean_data()
 
     def _change_data_types(self):
         self.df['License #'] = self.df['License #'].fillna(0)
@@ -28,11 +27,14 @@ class DataCleaner:
         self.df = self.df.rename(columns={'license_':'license'})
 
 
-    def _clean_data(self):
+    def _clean_data(self, save=False):
+        print("Cleaning records..")
         self.original_rows, self.original_cols = self.df.shape
         self.df.dropna()
         self.final_rows, self.final_cols = self.df.shape
-        self._save_df()
+        print("Records are clean and ready to be uploaded")
+        if save:
+            self._save_df()
 
 
     def _save_df(self):
