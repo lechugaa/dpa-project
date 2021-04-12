@@ -26,7 +26,7 @@ class CleanDataTask(luigi.Task):
         # execute process
 
         d = DataCleaner(self.historic, self.query_date)
-        d._clean_data(save=True)
+        d.clean_data(save=True)
 
         # uploading file
         s3_resource = get_s3_resource()

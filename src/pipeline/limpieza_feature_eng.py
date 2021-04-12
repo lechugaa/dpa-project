@@ -27,7 +27,7 @@ class DataCleaner:
         self.df = self.df.rename(columns={'license_':'license'})
 
 
-    def _clean_data(self, save=False):
+    def clean_data(self, save=False):
         print("Cleaning records..")
         self.original_rows, self.original_cols = self.df.shape
         self.df.dropna()
