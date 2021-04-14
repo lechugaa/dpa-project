@@ -51,3 +51,34 @@ class DataCleaner:
             self.final_rows,
             self.final_cols, self.historic, self.query_date)]
 
+
+class DataEngineer:
+
+    def __init__(self, historic=False, query_date=None):
+        pass
+
+    # estos son los métodos que mandaré llamar desde Luigi
+    def generate_features(self, save=False):
+        """
+        Genera el self.df a partir de los datos post-limpieza (los toma de S3)
+        Este self.df ya debe contener todos los features que se quieren agregar
+        para entrenar y predecir
+        :param save: booleano que determina si se guarda localmente o no el df
+        """
+        pass
+
+    def get_featured_df(self):
+        """
+        Regresa el atributo df de la clase. Esta función debe llamarse después de
+        generate_features
+        :return: data frame con los features añadidos
+        """
+        return self.df
+
+    def get_feature_engineering_metadata(self):
+        """
+        Genera los metadatos del proceso de generación de features y los regresa como una
+        lista de tuplas para ser escritos en una base de datos
+        :return: lista de tuplas con metadatos
+        """
+        pass
