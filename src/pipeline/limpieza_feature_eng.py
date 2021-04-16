@@ -1,7 +1,9 @@
 import pickle
+import re
 #import pandas as pd #parche
 
 from src.utils.general import get_pickle_from_s3_to_pandas, get_file_path_
+from src.utils.general import load_from_pickle
 
 # from datetime import datetime
 # query_date = datetime(2021,4,10)
@@ -148,7 +150,88 @@ class DataCleaner:
 class DataEngineer:
 
     def __init__(self, historic=False, query_date=None):
-        pass
+        self.historic = historic
+        self.query_date = query_date
+        self.df = self._get_df()
+        self.original_rows, self.original_cols = self.df.shape
+
+
+    def _get_df(self):
+        """Función para cargar el pickle que se guarda en local
+        de la task anterior.
+        """
+        pickle_task_anterior = get_file_path_(self.historic, self.query_date, prefix='clean')
+        df = load_from_pickle(pickle_task_anterior)
+        return df
+
+
+    def _extract_violation_num(self, s) -> int:
+    	"""
+    	Extrae el número de violación en un string. 
+    	:param s: string
+        	      texto del registro
+    	:return: int
+    	"""
+        pattern = '_?\d+_'  # guion_bajo opcional + numeros + guion_bajo
+        result = re.findall(pattern, s)
+        if not result:  # no hay violaciones
+            return 0
+        else:  # regresa número de violación
+            return int(result[0].replace('_', ''))
+    
+
+    def _get_violations_incurred(self) -> list:
+    	"""
+    	Extra el total de violaciones en un registro. 
+    	:param s: string
+        	      Una celda de la columna 'violations'
+    	:return violation_nums: list
+           	 lista con todas las infracciones, por ejemplo, [13,22,55]
+    	"""
+    	all_violations = s.split('~')
+    	violation_nums = []
+    	for violation in all_violations:
+        	violation_nums.append(self._extract_violation_num(violation))
+    
+    	return violation_nums
+    
+	def _add_extra_columns(self, df):
+    	    """Añade columnas para one hot encoding."""
+    	    for i in range(1, 80):
+                column = 'violation_' + str(i)
+        	df[column] = 0
+    
+    	    return df
+
+    def add_one_hot_encoding(df):
+        """ 
+         Realiza todo el pipeline.
+    
+        :param df: pandas dataframe
+        :return df: dataframe con el one hot encoding
+         """
+    
+        # crear columnas
+        df = add_extra_columns(df)
+        df['lista_violaciones'] = df.violations.apply(get_violations_incurred)
+    
+        # luego llenamos df
+        for i in range(len(df)):
+            violaciones = df['lista_violaciones'][i]
+            violaciones = [e for e in violaciones if e!= '0']
+            for violacion in violaciones:
+                column_index = violacion + 12
+                df.iloc[i, column_index] = 1
+
+        # tiramos columnas  temporales y las que están todas en ceros
+        df.drop(columns=['lista_violaciones'], inplace = True)
+        df = df.loc[(df.sum(axis=1) != 0), (df.sum(axis=0) != 0)]
+    
+       return df
+
+      
+
+
 
     # estos son los métodos que mandaré llamar desde Luigi
     def generate_features(self, save=False):
@@ -158,6 +241,7 @@ class DataEngineer:
         para entrenar y predecir
         :param save: booleano que determina si se guarda localmente o no el df
         """
+
         pass
 
     def get_featured_df(self):
