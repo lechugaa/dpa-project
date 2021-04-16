@@ -212,7 +212,8 @@ def get_pickle_from_s3_to_pandas(historic=False, query_date=None):
     if query_date is None:
         query_date = datetime.datetime.now().strftime("%Y-%m-%d")
     else:
-        date_string = query_date.strftime("%Y-%m-%d")
+        #date_string = query_date.strftime("%Y-%m-%d")
+        query_date = query_date.strftime("%Y-%m-%d") #correccion
 
     client = get_s3_resource()
     pickle_path = get_upload_path(False, query_date)
@@ -221,3 +222,5 @@ def get_pickle_from_s3_to_pandas(historic=False, query_date=None):
     print(f"Successfully loaded Dataframe from {pickle_path}")
 
     return df
+
+
