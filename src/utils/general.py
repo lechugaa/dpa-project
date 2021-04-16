@@ -215,7 +215,7 @@ def get_pickle_from_s3_to_pandas(historic=False, query_date=None):
         date_string = query_date.strftime("%Y-%m-%d")
 
     client = get_s3_resource()
-    pickle_path = get_upload_path(False, query_date)
+    pickle_path = get_upload_path(False, date_string)
     obj = client.Object(bucket_name, pickle_path).get()['Body'].read()
     df = pd.DataFrame(pickle.loads(obj))
     print(f"Successfully loaded Dataframe from {pickle_path}")
