@@ -210,10 +210,9 @@ def get_pickle_from_s3_to_pandas(historic=False, query_date=None):
     """
     # actualizar la fecha en caso de que no nos las den
     if query_date is None:
-        query_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        date_string  = datetime.datetime.now().strftime("%Y-%m-%d")
     else:
-        #date_string = query_date.strftime("%Y-%m-%d")
-        query_date = query_date.strftime("%Y-%m-%d") #correccion
+        date_string = query_date.strftime("%Y-%m-%d")
 
     client = get_s3_resource()
     pickle_path = get_upload_path(False, query_date)
