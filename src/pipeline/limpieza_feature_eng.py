@@ -171,7 +171,7 @@ class DataCleaner:
         self._change_data_types()
         self._clean_results()
         self._standarize_column_strings(
-            ['facility_type', 'risk', 'inspection_type'])
+            ['facility_type', 'risk', 'inspection_type', 'results'])
         self._clean_facility_type()
         self._clean_inspection_type()
         self._crea_num_violations()
