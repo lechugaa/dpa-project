@@ -14,7 +14,7 @@ class DataCleaner:
     def __init__(self, historic=False, query_date=None):
         self.df = get_pickle_from_s3_to_pandas(historic, query_date)
         # parche
-        # self.df = pd.DataFrame(pickle.load(open('temp/consecutive-inspections-2021-03-15.pkl', 'rb')))
+        # self.df = pd.DataFrame(pickle.load(open('temp/historic-inspections-2021-03-15.pkl', 'rb')))
         # end parche
         self.historic = historic
         self.query_date = query_date
@@ -32,7 +32,7 @@ class DataCleaner:
             'facility_type', 'risk', 'inspection_type', 'violations']].fillna('na')
 
     def _change_data_types(self):
-        self.df = self.df.astype({"zip": 'int'})
+        self.df = self.df.astype({'inspection_date':'datetime64', 'longitude':'double', 'latitude':'double', 'zip': 'int'})
         self.df = self.df.astype({"zip": 'str'})
 
     def _clean_results(self):
@@ -61,11 +61,11 @@ class DataCleaner:
             self.df[col] = self.df[col].apply(
                 lambda x: x.lower().replace("ü", "u"))
 
-        for ch in excluded_punctuation:
-            self.df[col] = self.df[col].apply(lambda x: x.replace(ch, ""))
+            for ch in excluded_punctuation:
+                self.df[col] = self.df[col].apply(lambda x: x.replace(ch, ""))
 
-        for ch in gap_punct:
-            self.df[col] = self.df[col].apply(lambda x: x.replace(ch, "_"))
+            for ch in gap_punct:
+                self.df[col] = self.df[col].apply(lambda x: x.replace(ch, "_"))
 
     def _clean_facility_type(self):
 
