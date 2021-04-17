@@ -1,6 +1,6 @@
 import pickle
 import re
-# import pandas as pd #parche
+import pandas as pd
 
 from src.utils.general import get_pickle_from_s3_to_pandas, get_file_path_
 from src.utils.general import load_from_pickle
@@ -28,8 +28,8 @@ class DataCleaner:
 
     def _fill_nas(self):
         self.df['zip'] = self.df['zip'].fillna(0)
-        self.df[['facility_type', 'risk', 'inspection_type', 'violations']] = self.df[[
-            'facility_type', 'risk', 'inspection_type', 'violations']].fillna('na')
+        self.df[['facility_type', 'inspection_type', 'violations']] = self.df[[
+            'facility_type', 'inspection_type', 'violations']].fillna('na')
 
     def _change_data_types(self):
         self.df = self.df.astype({'inspection_date':'datetime64', 'longitude':'double', 'latitude':'double', 'zip': 'int'})
@@ -38,7 +38,7 @@ class DataCleaner:
     def _clean_results(self):
         self.df['results'].mask(self.df['results'] !=
                                 'Pass', other='Not Pass', inplace=True)
-
+        
     # def _standarize_column_names(self, excluded_punctuation=".,-*¿?¡!#"):
         # self.df.columns = self.df.columns.str.lower().str.replace(" ", "_")
         # for ch in excluded_punctuation:
@@ -67,6 +67,9 @@ class DataCleaner:
             for ch in gap_punct:
                 self.df[col] = self.df[col].apply(lambda x: x.replace(ch, "_"))
 
+    def _drop_risk_all(self):
+        self.df = self.df[self.df['risk'] != 'all']
+        
     def _clean_facility_type(self):
 
         self.df['facility_type'] = self.df['facility_type'].apply(
@@ -155,6 +158,7 @@ class DataCleaner:
             'complaint', case=False, na=None), 'inspection_type'] = 'complaint'
         self.df.loc[self.df['inspection_type'].str.contains(
             'food|sick', case=False, na=None), 'inspection_type'] = 'suspected_food_poisoning'
+            
 
     def _crea_num_violations(self):
         self.df['num_violations'] = self.df['violations'].apply(
@@ -168,10 +172,12 @@ class DataCleaner:
         # Codigo Agregado MH
         self._subset_cols()
         self._fill_nas()
+        self.df.dropna(axis = 0, inplace = True)
         self._change_data_types()
         self._clean_results()
         self._standarize_column_strings(
             ['facility_type', 'risk', 'inspection_type', 'results'])
+        self._drop_risk_all()
         self._clean_facility_type()
         self._clean_inspection_type()
         self._crea_num_violations()
@@ -206,6 +212,9 @@ class DataEngineer:
         self.historic = historic
         self.query_date = query_date
         self.df = self._get_df()
+        # Parche
+        # self.df = pd.DataFrame(pickle.load(open('temp/historic-clean-2021-03-15.pkl', 'rb')))
+        # end parche
         self.original_rows, self.original_cols = self.df.shape
         self.prefix = 'feat-eng'
 
@@ -215,7 +224,7 @@ class DataEngineer:
         """
         pickle_task_anterior = get_file_path_(
             self.historic, self.query_date, prefix='clean')
-        df = load_from_pickle(pickle_task_anterior)
+        df = load_from_pickle(pickle_task_anterior)      
         df.violations = df.violations.astype('str')
         return df
 
@@ -226,12 +235,12 @@ class DataEngineer:
                       texto del registro
         :return: int
         """
-        pattern = '_?\d+_'  # guion_bajo opcional + numeros + guion_bajo
+        pattern = '\d+\.'  # numeros + punto # cambio para coincidir con formato de violations
         result = re.findall(pattern, s)
         if not result:  # no hay violaciones
             return 0
         else:  # regresa número de violación
-            return int(result[0].replace('_', ''))
+            return int(result[0].replace('.', '')) # cambio
 
     def _get_violations_incurred(self, s) -> list:
         """
@@ -241,7 +250,7 @@ class DataEngineer:
         :return violation_nums: list
                  lista con todas las infracciones, por ejemplo, [13,22,55]
         """
-        all_violations = s.split('_~_')
+        all_violations = s.split(' | ')
         violation_nums = []
         for violation in all_violations:
             violation_nums.append(self._extract_violation_num(violation))
@@ -294,7 +303,27 @@ class DataEngineer:
         other += valid_cols
         return df[other]
 
+        # Codigo MH
+    def _get_date_features(self):
+        self.df['dow'] = self.df['inspection_date'].dt.day_name()
+        self.df['dow'] = self.df['dow'].str.lower()
+        self.df['month'] = self.df['inspection_date'].dt.month
+        self.df = self.df.astype({"month": 'str'})
+        
+    def _change_vars_other(self):
+        self.df['inspection_type'] =  self.df['inspection_type'].mask(self.df['inspection_type'].map(self.df['inspection_type'].value_counts(normalize=True)) < 0.0002, 'other')
+        self.df['inspection_type'] =  self.df['facility_type'].mask(self.df['facility_type'].map(self.df['facility_type'].value_counts(normalize=True)) < 0.0002, 'other')
+        self.df['zip'] =  self.df['zip'].mask(self.df['zip'].map(self.df['zip'].value_counts(normalize=True)) < 0.002, 'other')
 
+    def _change_labels_y(self):
+        self.df['results'] = self.df['results'].apply(lambda x: '1' if x in ['pass'] else '0' )
+        
+    def _encode_data_onehot(self):
+        self.df = pd.get_dummies(self.df, columns = ['facility_type', 'inspection_type','risk','zip', 'dow','month'])
+        ###
+
+    def _drop_useless_cols(self):
+        self.df = self.df.drop(['inspection_id','inspection_date','violations'], axis=1)
 
     def _save_df(self):
         local_path = get_file_path_(self.historic, self.query_date, self.prefix)
@@ -310,8 +339,15 @@ class DataEngineer:
         para entrenar y predecir
         :param save: booleano que determina si se guarda localmente o no el df
         """
-        self.df = self._add_one_hot_encoding(self.df)
-        self.df = self._drop_zero_cols(self.df)
+        # self.df = self._add_one_hot_encoding(self.df) #Tarda mucho, evaluar si es necesario
+        # self.df = self._drop_zero_cols(self.df) #Tarda mucho, evaluar si es necesario
+        # Agrega codigo MH
+        self._get_date_features()
+        self._change_vars_other()
+        self._change_labels_y()
+        self._drop_useless_cols()
+        self._encode_data_onehot()
+        # ##
         self.final_rows, self.final_cols = self.df.shape
         if save:
             self._save_df()
@@ -322,6 +358,7 @@ class DataEngineer:
         generate_features
         :return: data frame con los features añadidos
         """
+        self.generate_features()
         return self.df
 
     def get_feature_engineering_metadata(self):
