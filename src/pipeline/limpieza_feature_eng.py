@@ -27,7 +27,11 @@ class DataCleaner:
             'facility_type', 'inspection_type', 'violations']].fillna('na')
 
     def _change_data_types(self):
-        self.df = self.df.astype({'inspection_date':'datetime64', 'longitude':'double', 'latitude':'double', 'zip': 'int'})
+        self.df = self.df.astype({
+            'inspection_date': 'datetime64',
+            'longitude': 'double',
+            'latitude': 'double',
+            'zip': 'int'})
         self.df = self.df.astype({"zip": 'str'})
 
     def _clean_results(self):
@@ -167,8 +171,7 @@ class DataCleaner:
         self.df.dropna(axis = 0, inplace = True)
         self._change_data_types()
         self._clean_results()
-        self._standardize_column_strings(
-            ['facility_type', 'risk', 'inspection_type', 'results'])
+        self._standardize_column_strings(['facility_type', 'risk', 'inspection_type', 'results'])
         self._drop_risk_all()
         self._clean_facility_type()
         self._clean_inspection_type()
@@ -330,13 +333,13 @@ class DataEngineer:
         """
         # self.df = self._add_one_hot_encoding(self.df) #Tarda mucho, evaluar si es necesario
         # self.df = self._drop_zero_cols(self.df) #Tarda mucho, evaluar si es necesario
-        # Agrega codigo MH
+        # Agrega código MH
         self._get_date_features()
         self._change_vars_other()
         self._change_labels_y()
         self._drop_useless_cols()
         self._encode_data_onehot()
-        # ##
+        #
         self.final_rows, self.final_cols = self.df.shape
         if save:
             self._save_df()
@@ -358,4 +361,3 @@ class DataEngineer:
         """
         return [(self.original_rows, self.original_cols, self.final_rows,
                  self.final_cols, self.historic, self.query_date)]
-
