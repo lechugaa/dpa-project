@@ -17,8 +17,8 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
    1. [Constantes](#constantes)
 1. [Estructura del proyecto](#estructura-del-proyecto)
 1. [Orquestación](#orquestación)
-   1. [DataS3UploadTask](#datas3uploadtask)
-   1. [DataIngestionTask](#dataingestiontask)
+   1. [Ejemplo: Metadatos de limpieza histórica](#ejemplo-metadatos-de-limpieza-histórica-del-día-19-de-abril-de-2021)
+   1. [Ejemplo: Metadatas de feature engineering continuo](#ejemplo-metadatos-de-feature-engineering-continuo-del-día-de-hoy)
 1. [Proceso de ingesta manual](#proceso-de-ingesta-manual)
    1. [Ingesta histórica](#ingesta-histórica)
    1. [Ingesta consecutiva](#ingesta-consecutiva)
@@ -105,6 +105,13 @@ s3:
 
 food_inspections:
   api_token: SU_APP_TOKEN_DE_CHICAGO_API
+  
+data_base:
+   user: USUARIO
+   password: PASSWORD
+   database: NOMBRE_DE_BASE_DE_DATOS
+   host: IP_DE_INSTANCIA_DE_BASE_DE_DATOS_EN_AWS
+   port: PUERTO
 ...
 ```
 
@@ -123,93 +130,107 @@ continuación:
 Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipynb`.
 
 ```
-├── README.md                           <- The top-level README for developers using this project.
+├── README.md                                         <- The top-level README for developers using this project.
 ├── conf
-│   ├── base                            <- Space for shared configurations like parameters
-│   └── local                           <- Space for local configurations, usually credentials
-│       └── credentials.yaml            <- Required credentials for connecting to AWS
-├── data                                <- Space for temporary csv files required for testing and EDA
+│   ├── base                                          <- Space for shared configurations like parameters
+│   └── local                                         <- Space for local configurations, usually credentials
+│       └── credentials.yaml                          <- Required credentials for connecting to AWS
+├── data                                              <- Space for temporary csv files required for testing and EDA
 │
-├── docs                                <- Space for Sphinx documentation
+├── docs                                              <- Space for Sphinx documentation
 │
 │
-├── img                                 <- Images used for README.md
-├── notebooks                           <- Jupyter notebooks.
-│   ├── legacy                          <- Jupyter notebook drafts
-│   ├── shapefiles                      <- Shapefiles and geojson required for graphing purposes
-│   └── eda.ipynb                       <- Iniital EDA and GEDA for project
+├── img                                               <- Images used for README.md
+├── notebooks                                         <- Jupyter notebooks.
+│   ├── legacy                                        <- Jupyter notebook drafts
+│   ├── shapefiles                                    <- Shapefiles and geojson required for graphing purposes
+│   ├── modeling                                      <- Jupyer notebooks used for cleaning, feature engineering and modeling drafts
+│   └── eda.ipynb                                     <- Iniital EDA and GEDA for project
 │   
-├── references                          <- Data dictionaries, manuals, and all other explanatory materials.
+├── references                                        <- Data dictionaries, manuals, and all other explanatory materials.
 │
-├── results                             <- Intermediate analysis as HTML, PDF, LaTeX, etc.
+├── results                                           <- Intermediate analysis as HTML, PDF, LaTeX, etc.
 │
-├── requirements.txt                    <- The requirements file
+├── requirements.txt                                  <- The requirements file
 │
-├── .gitignore                          <- Avoids uploading data, credentials, outputs, system files etc
+├── .gitignore                                        <- Avoids uploading data, credentials, outputs, system files etc
 │
 ├── infrastructure
-├── sql
+├── sql                                               <- SQL scripts for generating database tables required for project
 ├── setup.py
-├── temp                                <- Temporal storage for general use in the project
-└── src                                 <- Source code for use in this project.
-    ├── __init__.py                     <- Makes src a Python module
+├── temp                                              <- Temporal storage for general use in the project
+└── src                                               <- Source code for use in this project.
+    ├── __init__.py                                   <- Makes src a Python module
     │
-    ├── utils                           <- Functions used across the project
-    │   ├── general.py                  <- Obtención de credenciales de AWS
-    │   └── constants.py                <- Definición de constantes del proyecto
-    ├── etl                             <- Scripts to transform data from raw to intermediate
+    ├── utils                                         <- Functions used across the project
+    │   ├── general.py                                <- Obtención de credenciales de AWS
+    │   └── constants.py                              <- Definición de constantes del proyecto
+    ├── etl                                           <- Scripts to transform data from raw to intermediate states
     │
     │
     ├── pipeline
-    │    └── ingesta_almacenamiento.py   <- ingesta datos desde API y almacenamiento en S3
+    │    ├── ingesta_almacenamiento.py                <- ingesta datos desde API y almacenamiento en S3
+    │    └── limpieza_feature_engineering.py          <- limpieza y generación de features de modelo
     │
-    └── orchestration                    <- Luigi task definitions used across the project
-         ├── data_ingestion_task.py      <- Luigi task for downloading data from the Chicago Food Inspections API
-         └── data_s3_upload_task.py      <- Luigi task for uploading a a file that exists in ./temp to S3
+    └── orchestration                                 <- Luigi task definitions used across the project
+         ├── data_ingestion_task.py                   <- Luigi task for data ingestion
+         ├── ingestion_metadata_task.py               <- Luigi task for data ingestion metadata
+         ├── data_s3_upload_task.py                   <- Luigi task for data upload to S3
+         ├── data_s3_upload_metadata_task.py          <- Luigi task for data upload to S3 metadata
+         ├── clean_data_task.py                       <- Luigi task for data cleaning
+         ├── clean_data_metadata_task.py              <- Luigi task for data cleaning metadata
+         ├── feature_engineering_task.py              <- Luigi task for feature engineering
+         └── feature_engineering_metadata_task.py     <- Luigi task for feature engineering metadata
 ```
 
 ## Orquestación
 
-El proyecto actualmente cuenta con dos tasks de orquestación. A continuación se muestra el DAG de Luigi:
+El proyecto actualmente cuenta con ocho tasks de orquestación. A continuación se muestra el DAG de Luigi:
 
-![DAG de Luigi](img/luigi_dag.png "Dag de Luigi")
+![DAG de Luigi](img/luigi_dag.png "DAG de Luigi") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
 
-### DataS3UploadTask
-
-Esta tarea requiere la ejecución de:
-* DataIngestionTask
-
-Se encarga de subir un archivo pickle contenido en la carpeta `temp` al bucket de S3 que se encuentra
-configurado en el proyecto a través de `src.utils.constants.py` y el archivo `conf.local.credentials.yaml`. El uso
-es el siguiente:
+Para ejecutar cualquiera de los siguientes tasks, una vez que se siguieron 
+[las instrucciones de configuración](#configuración), se requiere introducir la siguiente línea de comandos:
 
 ```
-PYTHONPATH='.' luigi --module 'src.orchestration.data_s3_upload_task' DataS3UploadTask [--local-scheduler] [--historic] [--query-date <YYYY-MM-DD>]
+PYTHONPATH='.' luigi --module src.orchestration.<NOMBRE_DE_SCRIPT> <NOMBRE_DE_CLASE> [--local-scheduler] [--historic] [--query-date <YYYY-MM-DD>]
 ```
 
-* `--historic`: si se incluye este argumento se realizará la ingesta histórica, mientras que si se omite se realizará 
-  una ingesta continua   
+* `--historic`: si se incluye este argumento se realizarán las tareas con los datos históricos, mientras que si se omite 
+  se realizarán con los datos de la última semana (ingesta continua).
 * `--query-date`: se debe agregar la fecha de ingesta deseada en formato YYYY-MM-DD. Si se omite este argumento, se
    utilizará la fecha del día de ejecución en el código.
+* `--local-scheduler`: ejecuta las tareas de Luigi sin necesidad de iniciar un scheduler. Para omitirse es necesario
+   estar corriendo un scheduler a través de comando `luigid` en otra consola.
   
-El resultado final de esa tarea es subir un archivo contenido en `temp` a la ruta correspondiente en un bucket de S3.
+La siguiente tabla se detallan todos los tasks del proyecto así como el `NOMBRE_DE_SCRIPT` y `NOMBRE_DE_CLASE` que 
+se requieren para ejecutarlo.
 
-### DataIngestionTask
+|        Etapa        |               Tarea              |                 Script                 |             Clase            | Descripción                                                                        |
+|:-------------------:|:--------------------------------:|:--------------------------------------:|:----------------------------:|------------------------------------------------------------------------------------|
+|       Ingesta       |              Ingesta             |        `data_ingestion_task`           |      `DataIngestionTask`     | Guardar localmente en formato pickle los datos solicitados de la API de Chicago.   |
+|       Ingesta       |       Metadatos de ingesta       |      `ingestion_metadata_task`         |    `IngestionMetadataTask`   | Genera los metadatos de `DataIngestionTask`.                                       |
+|    Almacenamiento   |          Almacenamiento          |        `data_s3_upload_task`           |      `DataS3UploadTask`      | Sube a S3 la ingesta de datos obtenida en la `DataIngestionTask`.                  |
+|    Almacenamiento   |    Metadatos de almacenamiento   |    `data_s3_upload_metadata_task`      |     `UploadMetadataTask`     | Genera los metadatos de `DataS3UploadTask`.                                        |
+|       Limpieza      |             Limpieza             |          `clean_data_task`             |        `CleanDataTask`       | Realiza la limpieza de los datos guardados en `DataS3UploadTask`.                  |
+|       Limpieza      |        Metadatos limpieza        |      `clean_data_metadata_task`        |      `CleanDataMetaTask`     | Genera los metadatos de `CleanDataTask`.                                           |
+| Feature engineering |        Feature engineering       |      `feature_engineering_task`        |   `FeatureEngineeringTask`   | Genera los features requeridos empleando los datos generados en `CleanDataTask`.   |
+| Feature engineering | Metadatos de feature engineering | `feature_engineering_metadata_task`    | `FeatureEngineeringMetaTask` | Genera los metadatos de `FeatureEngineeringTask`.                                  |
 
-Esta tarea se encarga de obtener los datos de la API de Chicago Food Inspections ya sea histórica a continua. El uso
-es el siguiente:
+
+Algunos ejemplos son:
+
+### Ejemplo: Metadatos de limpieza histórica del día 19 de abril de 2021
 
 ```
-PYTHONPATH='.' luigi --module 'src.orchestration.data_ingestion_task' DataIngestionTask [--local-scheduler] [--historic] [--query-date <YYYY-MM-DD>]
+PYTHONPATH='.' luigi --module src.orchestration.clean_data_metadata_task CleanDataMetaTask --local-scheduler --historic --query-date 2021-04-19
 ```
 
-* `--historic`: si se incluye este argumento se realizará la ingesta histórica, mientras que si se omite se realizará 
-  una ingesta continua   
-* `--query-date`: se debe agregar la fecha de ingesta deseada en formato YYYY-MM-DD. Si se omite este argumento, se
-   utilizará la fecha del día de ejecución en el código.
-  
-El resultado final de esta tarea es colocar un archivo pickle con los datos consultados de la API de Chicago en la 
-carpeta `temp`.
+### Ejemplo: Metadatos de feature engineering continuo del día de hoy
+
+```
+PYTHONPATH='.' luigi --module src.orchestration.feature_engineering_metadata_task FeatureEngineeringMetaTask --local-scheduler
+```
 
 ## Proceso de ingesta manual
 
