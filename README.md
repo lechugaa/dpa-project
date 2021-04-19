@@ -187,7 +187,7 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
 
 El proyecto actualmente cuenta con ocho tasks de orquestación. A continuación se muestra el DAG de Luigi:
 
-![DAG de Luigi](img/luigi_dag.png "DAG de Luigi") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
+![DAG de Luigi](img/luigi_dag_c4.png "DAG de Luigi") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
 
 Para ejecutar cualquiera de los siguientes tasks, una vez que se siguieron 
 [las instrucciones de configuración](#configuración), se requiere introducir la siguiente línea de comandos:
