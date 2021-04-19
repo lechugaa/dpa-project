@@ -5,7 +5,7 @@ from src.orchestration.data_s3_upload_task import DataS3UploadTask
 from src.pipeline.ingesta_almacenamiento import generar_metadatos_almacenamiento
 
 
-class UploadMetadaTask(CopyToTable):
+class UploadMetadataTask(CopyToTable):
 
     # parameters
     historic = luigi.BoolParameter(default=False)

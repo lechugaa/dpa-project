@@ -2,25 +2,20 @@ import pickle
 import re
 import pandas as pd
 
-from src.utils.general import get_pickle_from_s3_to_pandas, get_file_path_
+from src.utils.general import get_pickle_from_s3_to_pandas, get_file_path
 from src.utils.general import load_from_pickle
-
-# from datetime import datetime
-# query_date = datetime(2021,4,10)
 
 
 class DataCleaner:
 
+    # static variables
+    prefix = 'clean'
+
     def __init__(self, historic=False, query_date=None):
         self.df = get_pickle_from_s3_to_pandas(historic, query_date)
-        # parche
-        # self.df = pd.DataFrame(pickle.load(open('temp/historic-inspections-2021-03-15.pkl', 'rb')))
-        # end parche
         self.historic = historic
         self.query_date = query_date
-        self.prefix = 'clean'
-
-# Agregar nuevo codigo
+        self.prefix = DataCleaner.prefix
 
     def _subset_cols(self):
         self.df = self.df[['inspection_id', 'facility_type', 'risk', 'zip', 'inspection_date',
@@ -39,12 +34,12 @@ class DataCleaner:
         self.df['results'].mask(self.df['results'] !=
                                 'Pass', other='Not Pass', inplace=True)
         
-    # def _standarize_column_names(self, excluded_punctuation=".,-*¿?¡!#"):
+    # def _standardize_column_names(self, excluded_punctuation=".,-*¿?¡!#"):
         # self.df.columns = self.df.columns.str.lower().str.replace(" ", "_")
         # for ch in excluded_punctuation:
         #    self.df.columns = self.df.columns.str.replace(ch, "")
 
-    def _standarize_column_strings(self, columns, excluded_punctuation=".,-*'¿?¡!()", gap_punct="\/"):
+    def _standardize_column_strings(self, columns, excluded_punctuation=".,-*'¿?¡!()", gap_punct="\/"):
         for col in columns:
             self.df[col] = self.df[col].apply(
                 lambda x: x.lower().replace(" ", "_"))
@@ -158,13 +153,10 @@ class DataCleaner:
             'complaint', case=False, na=None), 'inspection_type'] = 'complaint'
         self.df.loc[self.df['inspection_type'].str.contains(
             'food|sick', case=False, na=None), 'inspection_type'] = 'suspected_food_poisoning'
-            
 
     def _crea_num_violations(self):
         self.df['num_violations'] = self.df['violations'].apply(
             lambda x: x.count(' | ') + 1 if x != 'na' else 0)
-
-###
 
     def clean_data(self, save=False):
         print("Cleaning records..")
@@ -175,7 +167,7 @@ class DataCleaner:
         self.df.dropna(axis = 0, inplace = True)
         self._change_data_types()
         self._clean_results()
-        self._standarize_column_strings(
+        self._standardize_column_strings(
             ['facility_type', 'risk', 'inspection_type', 'results'])
         self._drop_risk_all()
         self._clean_facility_type()
@@ -188,15 +180,12 @@ class DataCleaner:
             self._save_df()
 
     def _save_df(self):
-        local_path = get_file_path_(
-            self.historic, self.query_date, self.prefix)
+        local_path = get_file_path(self.historic, self.query_date, self.prefix)
         pickle.dump(self.df, open(local_path, 'wb'))
-        print(f"Succesfully saved temp file as pickle in: {local_path}")
+        print(f"Successfully saved temp file as pickle in: {local_path}")
 
     def get_clean_df(self):
-        # Codigo agregado MH
         self.clean_data()
-        #
         return self.df
 
     def get_cleaning_metadata(self):
@@ -208,6 +197,9 @@ class DataCleaner:
 
 class DataEngineer:
 
+    # static variables
+    prefix = 'feature-engineering'
+
     def __init__(self, historic=False, query_date=None):
         self.historic = historic
         self.query_date = query_date
@@ -216,13 +208,13 @@ class DataEngineer:
         # self.df = pd.DataFrame(pickle.load(open('temp/historic-clean-2021-03-15.pkl', 'rb')))
         # end parche
         self.original_rows, self.original_cols = self.df.shape
-        self.prefix = 'feat-eng'
+        self.prefix = DataEngineer.prefix
 
     def _get_df(self):
         """Función para cargar el pickle que se guarda en local
         de la task anterior.
         """
-        pickle_task_anterior = get_file_path_(
+        pickle_task_anterior = get_file_path(
             self.historic, self.query_date, prefix='clean')
         df = load_from_pickle(pickle_task_anterior)      
         df.violations = df.violations.astype('str')
@@ -289,7 +281,6 @@ class DataEngineer:
         df.drop(columns=['lista_violaciones'], inplace=True)
     
         return df
-    
 
     def _drop_zero_cols(self, df):
         all_columns = df.columns.values
@@ -303,7 +294,7 @@ class DataEngineer:
         other += valid_cols
         return df[other]
 
-        # Codigo MH
+    # Código MH
     def _get_date_features(self):
         self.df['dow'] = self.df['inspection_date'].dt.day_name()
         self.df['dow'] = self.df['dow'].str.lower()
@@ -320,18 +311,16 @@ class DataEngineer:
         
     def _encode_data_onehot(self):
         self.df = pd.get_dummies(self.df, columns = ['facility_type', 'inspection_type','risk','zip', 'dow','month'])
-        ###
 
     def _drop_useless_cols(self):
         self.df = self.df.drop(['inspection_id','inspection_date','violations'], axis=1)
 
     def _save_df(self):
-        local_path = get_file_path_(self.historic, self.query_date, self.prefix)
+        local_path = get_file_path(self.historic, self.query_date, self.prefix)
         pickle.dump(self.df, open(local_path, 'wb'))
         print(f"Succesfully saved temp file as pickle in: {local_path}")
 
-    # estos son los métodos que mandaré llamar desde Luigi
-
+    # Luigi's interface methods
     def generate_features(self, save=False):
         """
         Genera el self.df a partir de los datos post-limpieza (los toma de S3)

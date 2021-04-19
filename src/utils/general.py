@@ -22,6 +22,7 @@ def get_s3_resource():
     
     return session.resource('s3')
 
+
 def read_yaml(credentials_file):
     """
     Lee un archivo yaml
@@ -71,7 +72,7 @@ def get_api_token(credentials_file):
     return api_token
 
 
-def get_file_path(historic=False, query_date=None):
+def get_file_path(historic=False, query_date=None, prefix="ingestion"):
     """
     Regresa un string con la ruta necesaria para almacenamiento local. El parámetro 'historic'
     determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
@@ -82,33 +83,7 @@ def get_file_path(historic=False, query_date=None):
         historic=False -> return "<project_root>/temp/consecutive-inspections-2020-02-02.pkl"
     :param historic: boolean
     :param query_date: fecha (datetime) relacionada a la obtención de los datos
-    :return: string
-    """
-    if query_date is None:
-        date_string = datetime.datetime.now().strftime("%Y-%m-%d")
-    else:
-        date_string = query_date.strftime("%Y-%m-%d")
-
-    root_path = os.getcwd()
-
-    if historic:
-        return f"{root_path}/temp/historic-inspections-{date_string}.pkl"
-
-    return f"{root_path}/temp/consecutive-inspections-{date_string}.pkl"
-
-
-def get_file_path_(historic=False, query_date=None, prefix=''):
-    """
-    Regresa un string con la ruta necesaria para almacenamiento local. El parámetro 'historic'
-    determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
-    agregada a la ruta es la del momento de ejecución de la función. El formato de la fecha usado es %Y-%m-%d
-    Ejemplos:
-        historic=True -> return "<project_root>/temp/historic-inspections-2020-02-02.pkl"
-        historic=False -> return "<project_root>/temp/consecutive-inspections-2020-02-02.pkl"
-    :param historic: boolean
-    :param query_date: fecha (datetime) relacionada a la obtención de los datos
-    :param prefix: str
-                   relacionado con la etapa del proceso; por ejemplo 'cleaning', "feature_eng"
+    :param prefix: prefijo de archivo local en donde se almacenará
     :return: string
     """
     if query_date is None:
@@ -124,8 +99,34 @@ def get_file_path_(historic=False, query_date=None, prefix=''):
     return f"{root_path}/temp/{prefix}-consecutive-inspections-{date_string}.pkl"
 
 
+# def get_file_path_(historic=False, query_date=None, prefix=''):
+#     """
+#     Regresa un string con la ruta necesaria para almacenamiento local. El parámetro 'historic'
+#     determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
+#     agregada a la ruta es la del momento de ejecución de la función. El formato de la fecha usado es %Y-%m-%d
+#     Ejemplos:
+#         historic=True -> return "<project_root>/temp/historic-inspections-2020-02-02.pkl"
+#         historic=False -> return "<project_root>/temp/consecutive-inspections-2020-02-02.pkl"
+#     :param historic: boolean
+#     :param query_date: fecha (datetime) relacionada a la obtención de los datos
+#     :param prefix: str
+#                    relacionado con la etapa del proceso; por ejemplo 'cleaning', "feature_eng"
+#     :return: string
+#     """
+#     if query_date is None:
+#         date_string = datetime.datetime.now().strftime("%Y-%m-%d")
+#     else:
+#         date_string = query_date.strftime("%Y-%m-%d")
+#
+#     root_path = os.getcwd()
+#
+#     if historic:
+#         return f"{root_path}/temp/{prefix}-historic-inspections-{date_string}.pkl"
+#
+#     return f"{root_path}/temp/{prefix}-consecutive-inspections-{date_string}.pkl"
 
-def get_upload_path(historic=False, query_date=None):
+
+def get_upload_path(historic=False, query_date=None, prefix="ingestion"):
     """
     Regresa un string con la ruta necesaria para almacenamiento en el bucket de S3. El parámetro 'historic'
     determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
@@ -136,6 +137,7 @@ def get_upload_path(historic=False, query_date=None):
         historic=False -> return "ingestion/consecutive/consecutive-inspections-2020-02-02.pkl"
     :param historic: boolean
     :param query_date: fecha (datetime) relacionada a la obtención de los datos
+    :param prefix: comienzo de la ruta a obtener en S3
     :return: string
     """
     if query_date is None:
@@ -144,36 +146,34 @@ def get_upload_path(historic=False, query_date=None):
         date_string = query_date.strftime("%Y-%m-%d")
 
     if historic:
-        return f"ingestion/initial/historic-inspections-{date_string}.pkl"
+        return f"{prefix}/initial/historic-inspections-{date_string}.pkl"
 
-    return f"ingestion/consecutive/consecutive-inspections-{date_string}.pkl"
-
-def get_upload_path_(historic=False, query_date=None, prefix=''):
-    """
-    Regresa un string con la ruta necesaria para almacenamiento en el bucket de S3. El parámetro 'historic'
-    determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
-    agregada a la ruta es la del momento de ejecución de la función. El formato de la fecha usado es %Y-%m-%d
-    Ejemplos:
-        historic=True -> return "ingestion/initial/historic-inspections-2020-02-02.pkl"
-        historic=False -> return "ingestion/consecutive/consecutive-inspections-2020-02-02.pkl"
-    :param historic: boolean
-    :param query_date: fecha (datetime) relacionada a la obtención de los datos
-    :param prefix: str
-                  relacionado con la etapa del proceso (cleaning, fe, etc.)
-    :return: string
-    """
-    if query_date is None:
-        date_string = datetime.datetime.now().strftime("%Y-%m-%d")
-    else:
-        date_string = query_date.strftime("%Y-%m-%d")
-
-    if historic:
-        return f"preprocessing/initial/{prefix}-historic-inspections-{date_string}.pkl"
-
-    return f"preprocessing/consecutive/{prefix}-consecutive-inspections-{date_string}.pkl"
+    return f"{prefix}/consecutive/consecutive-inspections-{date_string}.pkl"
 
 
-
+# def get_upload_path_(historic=False, query_date=None, prefix=''):
+#     """
+#     Regresa un string con la ruta necesaria para almacenamiento en el bucket de S3. El parámetro 'historic'
+#     determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
+#     agregada a la ruta es la del momento de ejecución de la función. El formato de la fecha usado es %Y-%m-%d
+#     Ejemplos:
+#         historic=True -> return "ingestion/initial/historic-inspections-2020-02-02.pkl"
+#         historic=False -> return "ingestion/consecutive/consecutive-inspections-2020-02-02.pkl"
+#     :param historic: boolean
+#     :param query_date: fecha (datetime) relacionada a la obtención de los datos
+#     :param prefix: str
+#                   relacionado con la etapa del proceso (cleaning, fe, etc.)
+#     :return: string
+#     """
+#     if query_date is None:
+#         date_string = datetime.datetime.now().strftime("%Y-%m-%d")
+#     else:
+#         date_string = query_date.strftime("%Y-%m-%d")
+#
+#     if historic:
+#         return f"preprocessing/initial/{prefix}-historic-inspections-{date_string}.pkl"
+#
+#     return f"preprocessing/consecutive/{prefix}-consecutive-inspections-{date_string}.pkl"
 
 
 def load_from_pickle(path):
@@ -199,27 +199,24 @@ def save_to_pickle(obj, path):
     pickle.dump(obj, outfile)
     outfile.close()
 
+
 def get_pickle_from_s3_to_pandas(historic=False, query_date=None):
     """
     Una función para simplificar el proceso de cargar un pickle
     desde S3 a pandas.
-    :param pickle-path: str
-                        el nombre del pickle incluyendo folder, ej: ingesta/consecutiva/ejemplo.pkl
-    :returns df: pandas dataframe 
-                dataframe con la info del task anterior de Luigi. 
+    :param historic: boolean indicating whether process is historic or not
+    :param query_date: datetime of query
+    :returns df: pandas dataframe dataframe con la info del task anterior de Luigi.
     """
-    # actualizar la fecha en caso de que no nos las den
+
+    # obtener fecha de hoy en caso de que no nos las den
     if query_date is None:
-        date_string  = datetime.datetime.now().strftime("%Y-%m-%d")
-    else:
-        date_string = query_date.strftime("%Y-%m-%d")
+        query_date = datetime.datetime.now()
 
     client = get_s3_resource()
-    pickle_path = get_upload_path(False, date_string)
+    pickle_path = get_upload_path(historic, query_date)
     obj = client.Object(bucket_name, pickle_path).get()['Body'].read()
     df = pd.DataFrame(pickle.loads(obj))
     print(f"Successfully loaded Dataframe from {pickle_path}")
 
     return df
-
-
