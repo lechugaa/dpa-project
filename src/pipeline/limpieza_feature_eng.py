@@ -1,6 +1,7 @@
 import pickle
 import re
 import pandas as pd
+import datetime
 
 from src.utils.general import get_pickle_from_s3_to_pandas, get_file_path
 from src.utils.general import load_from_pickle
@@ -192,6 +193,9 @@ class DataCleaner:
         return self.df
 
     def get_cleaning_metadata(self):
+        if self.query_date is None:
+            self.query_date = datetime.datetime.now()
+
         return [(self.original_rows,
                  self.original_cols,
                  self.final_rows,
@@ -359,5 +363,8 @@ class DataEngineer:
         lista de tuplas para ser escritos en una base de datos
         :return: lista de tuplas con metadatos
         """
+        if self.query_date is None:
+            self.query_date = datetime.datetime.now()
+
         return [(self.original_rows, self.original_cols, self.final_rows,
                  self.final_cols, self.historic, self.query_date)]
