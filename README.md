@@ -123,7 +123,17 @@ continuación:
 
 * `bucket_name`: esta debe ser modificada por el nombre de un bucket de S3 al que usted tenga acceso desde las 
   credenciales de AWS que configuro en el paso anterior.
+  
+### Base de datos
 
+Para poder ejecutar las secciones del proyecto que requieren de una base de datos postgres en AWS es importante 
+que exista la base de datos que añadió en `conf/local/credentials.yaml` para con nombre `NOMBRE_DE_BASE_DE_DATOS`.
+
+En `sql/create_metadata_tables.sql` se encuentra el código de SQL necesario para crear el esquema en la base de datos
+configurada en caso de ser necesario. No obstante, se recomienda, dejar que Luigi lo realice por sí solo para evitar
+pasos adicionales de configuración. Para que esto suceda automáticamente, al correr el orquestador, es necesario
+que la base de datos del archivo de credenciales exista y que se hayan agregado correctamente los elementos de conexión
+a este mismo archivo.
 
 ## Estructura del proyecto
 
