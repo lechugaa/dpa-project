@@ -237,10 +237,10 @@ Algunos ejemplos son:
 PYTHONPATH='.' luigi --module src.orchestration.clean_data_metadata_task CleanDataMetaTask --local-scheduler --historic --query-date 2021-04-19
 ```
 
-### Ejemplo: Metadatos de feature engineering continuo del día de hoy
+### Ejemplo: Metadatos de feature engineering continuo del 20 de abril del 2021
 
 ```
-PYTHONPATH='.' luigi --module src.orchestration.feature_engineering_metadata_task FeatureEngineeringMetaTask --local-scheduler
+PYTHONPATH='.' luigi --module src.orchestration.feature_engineering_metadata_task FeatureEngineeringMetaTask --local-scheduler --query-date 2021-04-20
 ```
 
 ## Proceso de ingesta manual
