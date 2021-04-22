@@ -1,3 +1,4 @@
+import datetime
 import luigi
 import luigi.contrib.s3
 
@@ -12,7 +13,7 @@ class FeatureEngineeringTask(luigi.Task):
 
     # class attributes
     historic = luigi.BoolParameter(default=False)
-    query_date = luigi.DateParameter(default=None)
+    query_date = luigi.DateParameter(default=datetime.date.today())
 
     def requires(self):
         return CleanDataMetaTask(historic=self.historic, query_date=self.query_date)

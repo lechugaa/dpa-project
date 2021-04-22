@@ -1,3 +1,4 @@
+import datetime
 import luigi
 from luigi.contrib.postgres import CopyToTable
 from src.utils.general import get_db_credentials
@@ -9,7 +10,7 @@ class UploadMetadataTask(CopyToTable):
 
     # parameters
     historic = luigi.BoolParameter(default=False)
-    query_date = luigi.DateParameter(default=None)
+    query_date = luigi.DateParameter(default=datetime.date.today())
 
     # recuperando credenciales de base de datos
     credentials = get_db_credentials('conf/local/credentials.yaml')
