@@ -2,7 +2,7 @@ import datetime
 import luigi
 from luigi.contrib.postgres import CopyToTable
 from src.utils.general import get_db_credentials
-from src.orchestration.data_ingestion_task import DataIngestionTask
+from src.orchestration.ingestion_testing_task import IngestionTestingTask
 from src.pipeline.ingesta_almacenamiento import generar_metadatos_ingesta
 
 
@@ -32,7 +32,7 @@ class IngestionMetadataTask(CopyToTable):
                ("data_size", "FLOAT")]
 
     def requires(self):
-        return DataIngestionTask(historic=self.historic, query_date=self.query_date)
+        return IngestionTestingTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
         rows = generar_metadatos_ingesta(self.historic, self.query_date)
