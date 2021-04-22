@@ -34,7 +34,7 @@ class IngestionTestingTask(CopyToTable):
 
     def rows(self):
         file_path = get_file_path(historic=self.historic, query_date=self.query_date)
-        tester = IngestionTest(file_path)
+        tester = IngestionTest(historic=self.historic, query_date=self.query_date)
         results = tester()
         if len(results.failures) > 0:
             for failure in results.failures:

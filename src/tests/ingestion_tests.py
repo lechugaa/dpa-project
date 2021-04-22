@@ -1,16 +1,18 @@
 import unittest
 import pandas as pd
-from src.utils.general import load_from_pickle
+from src.utils.general import load_from_pickle, get_file_path
 
 
 class IngestionTest(unittest.TestCase):
 
-    def __init__(self, ingestion_path, *args, **kwargs):
+    def __init__(self, historic, query_date, *args, **kwargs):
         super(IngestionTest, self).__init__(*args, **kwargs)
-        self.data_path = ingestion_path
+        self.historic = historic
+        self.query_date = query_date
 
     def setUp(self):
-        ingestion_data = load_from_pickle(self.data_path)
+        data_path = get_file_path(historic=self.historic, query_date=self.query_date)
+        ingestion_data = load_from_pickle(data_path)
         self.df = pd.DataFrame.from_dict(ingestion_data)
 
     def test_number_of_columns(self):
