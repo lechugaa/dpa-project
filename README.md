@@ -15,6 +15,7 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
    1. [Notebooks](#notebooks)
    1. [Credenciales](#credenciales)
    1. [Constantes](#constantes)
+   1. [Base de datos](#base-de-datos)
 1. [Estructura del proyecto](#estructura-del-proyecto)
 1. [Orquestación](#orquestación)
    1. [Ejemplo: Metadatos de limpieza histórica](#ejemplo-metadatos-de-limpieza-histórica-del-día-19-de-abril-de-2021)
@@ -236,10 +237,10 @@ Algunos ejemplos son:
 PYTHONPATH='.' luigi --module src.orchestration.clean_data_metadata_task CleanDataMetaTask --local-scheduler --historic --query-date 2021-04-19
 ```
 
-### Ejemplo: Metadatos de feature engineering continuo del día de hoy
+### Ejemplo: Metadatos de feature engineering continuo del 20 de abril del 2021
 
 ```
-PYTHONPATH='.' luigi --module src.orchestration.feature_engineering_metadata_task FeatureEngineeringMetaTask --local-scheduler
+PYTHONPATH='.' luigi --module src.orchestration.feature_engineering_metadata_task FeatureEngineeringMetaTask --local-scheduler --query-date 2021-04-20
 ```
 
 ## Proceso de ingesta manual
