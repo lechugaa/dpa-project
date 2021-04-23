@@ -14,6 +14,8 @@ class DataCleaner:
 
     def __init__(self, historic=False, query_date=None):
         self.df = get_pickle_from_s3_to_pandas(historic, query_date)
+        #Parche
+        #self.df = pd.DataFrame(pd.read_pickle('temp/historic-inspections-2021-02-22.pkl'))
         self.historic = historic
         self.query_date = query_date
         self.prefix = DataCleaner.prefix
@@ -38,11 +40,6 @@ class DataCleaner:
     def _clean_results(self):
         self.df['results'].mask(self.df['results'] !=
                                 'Pass', other='Not Pass', inplace=True)
-        
-    # def _standardize_column_names(self, excluded_punctuation=".,-*¿?¡!#"):
-        # self.df.columns = self.df.columns.str.lower().str.replace(" ", "_")
-        # for ch in excluded_punctuation:
-        #    self.df.columns = self.df.columns.str.replace(ch, "")
 
     def _standardize_column_strings(self, columns, excluded_punctuation=".,-*'¿?¡!()", gap_punct="\/"):
         for col in columns:
@@ -162,6 +159,9 @@ class DataCleaner:
     def _crea_num_violations(self):
         self.df['num_violations'] = self.df['violations'].apply(
             lambda x: x.count(' | ') + 1 if x != 'na' else 0)
+        
+    def _sort_by_date(self):
+        self.df.sort_values('inspection_date', inplace = True)
 
     def clean_data(self, save=False):
         print("Cleaning records..")
@@ -177,6 +177,7 @@ class DataCleaner:
         self._clean_facility_type()
         self._clean_inspection_type()
         self._crea_num_violations()
+        self._sort_by_date()
         ###
         self.final_rows, self.final_cols = self.df.shape
         print("Records are clean and ready to be uploaded")
