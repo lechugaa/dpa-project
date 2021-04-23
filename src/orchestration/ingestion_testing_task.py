@@ -1,7 +1,7 @@
 import datetime
 import luigi
 from luigi.contrib.postgres import CopyToTable
-from src.utils.general import get_db_credentials, get_file_path
+from src.utils.general import get_db_credentials
 from src.orchestration.data_ingestion_task import DataIngestionTask
 from src.tests.ingestion_tests import IngestionTest
 
@@ -33,7 +33,6 @@ class IngestionTestingTask(CopyToTable):
         return DataIngestionTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
-        file_path = get_file_path(historic=self.historic, query_date=self.query_date)
         tester = IngestionTest(historic=self.historic, query_date=self.query_date)
         results = tester()
         if len(results.failures) > 0:
@@ -41,6 +40,6 @@ class IngestionTestingTask(CopyToTable):
                 print(failure)
             raise Exception("Ingestion tests failed...")
 
-        rows = [(str(self.query_date), "ingestion-test")]
+        rows = [(str(datetime.date.today()), "ingestion-test")]
         for row in rows:
             yield row

@@ -25,7 +25,7 @@ class IngestionTest(unittest.TestCase):
         expected_columns = ['inspection_id', 'dba_name', 'aka_name','license_', 'facility_type', 'risk', 'address',
                             'city','state', 'zip', 'inspection_date', 'inspection_type', 'results', 'latitude',
                             'longitude', 'location', 'violations']
-        assert list(self.df.columns) == expected_columns, "Ingestión: Las variables obtenidas no son las correctas"
+        assert set(self.df.columns) == set(expected_columns), "Ingestión: Las variables obtenidas no son las correctas"
 
     def runTest(self):
         print("Corriendo tests de ingesta...")

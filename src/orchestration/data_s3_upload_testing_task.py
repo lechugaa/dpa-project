@@ -2,11 +2,11 @@ import datetime
 import luigi
 from luigi.contrib.postgres import CopyToTable
 from src.utils.general import get_db_credentials
-from src.orchestration.data_s3_upload_testing_task import DataS3UploadTestingTask
-from src.pipeline.ingesta_almacenamiento import generar_metadatos_almacenamiento
+from src.orchestration.data_s3_upload_task import DataS3UploadTask
+from src.tests.upload_tests import UploadTest
 
 
-class UploadMetadataTask(CopyToTable):
+class DataS3UploadTestingTask(CopyToTable):
 
     # parameters
     historic = luigi.BoolParameter(default=False)
@@ -23,17 +23,23 @@ class UploadMetadataTask(CopyToTable):
     port = credentials['port']
 
     # nombre de tabla de metadatos
-    table = 'test_upload_metadata'
+    table = 'unittests'
 
     # formato de tabla
-    columns = [("ingestion_date", "DATE"),
-               ("historic", "BOOLEAN"),
-               ("file_name", "VARCHAR(250)")]
+    columns = [("test_date", "DATE"),
+               ("test_name", "VARCHAR(250)")]
 
     def requires(self):
-        return DataS3UploadTestingTask(historic=self.historic, query_date=self.query_date)
+        return DataS3UploadTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
-        rows = generar_metadatos_almacenamiento(self.historic, self.query_date)
+        tester = UploadTest(historic=self.historic, query_date=self.query_date)
+        results = tester()
+        if len(results.failures) > 0:
+            for failure in results.failures:
+                print(failure)
+            raise Exception("Upload tests failed...")
+
+        rows = [(str(datetime.date.today()), "upload-test")]
         for row in rows:
             yield row
