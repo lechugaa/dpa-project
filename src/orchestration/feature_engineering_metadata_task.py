@@ -2,7 +2,7 @@ import datetime
 import luigi
 from luigi.contrib.postgres import CopyToTable
 from src.utils.general import get_db_credentials
-from src.orchestration.feature_engineering_task import FeatureEngineeringTask
+from src.orchestration.feature_eng_test_task import FeatureEngTestTask
 from src.pipeline.limpieza_feature_eng import DataEngineer
 
 
@@ -34,7 +34,7 @@ class FeatureEngineeringMetaTask(CopyToTable):
                ("ingestion_date", "DATE")]
 
     def requires(self):
-        return FeatureEngineeringTask(historic=self.historic, query_date=self.query_date)
+        return FeatureEngTestTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
         fe = DataEngineer(self.historic, self.query_date)
