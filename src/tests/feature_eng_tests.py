@@ -8,7 +8,7 @@ from src.utils.general import load_from_pickle, get_file_path, get_pickle_from_s
 class FeatureTester(unittest.TestCase):
    
     def __init__(self, historic, query_date, *args, **kwargs):
-        super(CleanTest, self).__init__(*args, **kwargs)
+        super(FeatureTester, self).__init__(*args, **kwargs)
         self.historic = historic
         self.query_date = query_date
 
