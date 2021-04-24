@@ -3,7 +3,7 @@ import luigi
 from luigi.contrib.postgres import CopyToTable
 from src.utils.general import get_db_credentials
 from src.orchestration.clean_data_task import CleanDataTask
-from src.tests.upload_tests import CleanTest
+from src.tests.clean_data_tests import CleanTest
 
 
 class CleanDataTestTask(CopyToTable):
