@@ -219,7 +219,7 @@ class DataEngineer:
         self.query_date = query_date
         self.df = self._get_df()
         # Parche
-        # self.df = pd.DataFrame(pickle.load(open('temp/historic-clean-2021-02-22.pkl', 'rb')))
+        # self.df = pd.DataFrame(pickle.load(open('temp/clean-historic-inspections-2021-02-22.pkl', 'rb')))
         # end parche
         self.original_rows, self.original_cols = self.df.shape
         self.prefix = DataEngineer.prefix
@@ -330,6 +330,7 @@ class DataEngineer:
         self._split_data()
         self._get_date_features()
         self._change_vars_other()
+        self._scale_vars()
         self._encode_data_onehot()
         self._drop_useless_cols()
         self._change_labels_y()
