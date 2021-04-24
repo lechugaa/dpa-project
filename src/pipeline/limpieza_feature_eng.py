@@ -13,9 +13,9 @@ class DataCleaner:
     prefix = 'clean'
 
     def __init__(self, historic=False, query_date=None):
-        self.df = get_pickle_from_s3_to_pandas(historic, query_date)
+        #self.df = get_pickle_from_s3_to_pandas(historic, query_date)
         #Parche
-        #self.df = pd.DataFrame(pd.read_pickle('temp/historic-inspections-2021-02-22.pkl'))
+        self.df = pd.DataFrame(pd.read_pickle('temp/historic-inspections-2021-02-22.pkl'))
         self.historic = historic
         self.query_date = query_date
         self.prefix = DataCleaner.prefix
@@ -162,6 +162,7 @@ class DataCleaner:
         
     def _sort_by_date(self):
         self.df.sort_values('inspection_date', inplace = True)
+        self.df.reset_index(inplace = True,drop = True)
 
     def clean_data(self, save=False):
         print("Cleaning records..")
@@ -213,7 +214,7 @@ class DataEngineer:
         self.query_date = query_date
         self.df = self._get_df()
         # Parche
-        # self.df = pd.DataFrame(pickle.load(open('temp/historic-clean-2021-03-15.pkl', 'rb')))
+        # self.df = pd.DataFrame(pickle.load(open('temp/historic-clean-2021-02-22.pkl', 'rb')))
         # end parche
         self.original_rows, self.original_cols = self.df.shape
         self.prefix = DataEngineer.prefix
