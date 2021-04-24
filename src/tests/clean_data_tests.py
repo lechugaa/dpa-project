@@ -17,14 +17,9 @@ class CleanTest(unittest.TestCase):
         file_path = get_file_path(
             historic=self.historic, query_date=self.query_date, prefix=DataCleaner.prefix)
         self.df = load_from_pickle(file_path)
-
-        # getting S3 pickle
-        self.uploaded_df = get_pickle_from_s3_to_pandas(
-            historic=self.historic, query_date=self.query_date)
-
-    def test_df_are_equal(self):
-        pd.testing.assert_frame_equal(
-            left=self.ingestion_df, right=self.uploaded_df)
+        
+    def test_df_not_empty(self):
+        assert self.df.shape[0] != 0, "Df is empty"
 
     def runTest(self):
         print("Corriendo tests de almacenamiento...")
