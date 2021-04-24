@@ -2,7 +2,7 @@ import datetime
 import luigi
 from luigi.contrib.postgres import CopyToTable
 from src.utils.general import get_db_credentials
-from src.orchestration.clean_data_test_task import CleanTest
+from src.orchestration.clean_data_test_task import CleanDataTestTask
 from src.pipeline.limpieza_feature_eng import DataCleaner
 
 
@@ -34,7 +34,7 @@ class CleanDataMetaTask(CopyToTable):
                ("ingestion_date", "DATE")]
 
     def requires(self):
-        return CleanTest(historic=self.historic, query_date=self.query_date)
+        return CleanDataTestTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
         d = DataCleaner(self.historic, self.query_date)
