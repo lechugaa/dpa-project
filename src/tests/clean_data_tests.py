@@ -24,7 +24,7 @@ class CleanTest(unittest.TestCase):
     def test_df_smaller_equal(self):
         assert self.clean_df.shape[1] <= self.original_df.shape[1], "Added extra columns!"
 
-    def test_df_not_equal(self):
+    def test_df_not_empty(self):
         assert self.clean_df.shape[0] != 0, "Df is empty..."
 
     def test_df_smaller_rows(self):
@@ -39,5 +39,8 @@ class CleanTest(unittest.TestCase):
 
     def runTest(self):
         print("Corriendo tests de limpieza de datos...")
-        self.test_df_are_equal()
+        self.test_df_smaller_equal()
+        self.test_df_not_empty()
+        self.test_df_smaller_rows()
+        self.test_df_columns()
         print(">>>> Tests de limpieza terminados <<<<")
