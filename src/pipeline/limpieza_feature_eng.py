@@ -13,9 +13,10 @@ class DataCleaner:
     prefix = 'clean'
 
     def __init__(self, historic=False, query_date=None):
-        #self.df = get_pickle_from_s3_to_pandas(historic, query_date)
+        self.df = get_pickle_from_s3_to_pandas(historic, query_date)
         #Parche
-        self.df = pd.DataFrame(pd.read_pickle('temp/historic-inspections-2021-02-22.pkl'))
+        # self.df = pd.DataFrame(pd.read_pickle('temp/historic-inspections-2021-02-22.pkl'))
+        # Parche
         self.historic = historic
         self.query_date = query_date
         self.prefix = DataCleaner.prefix
