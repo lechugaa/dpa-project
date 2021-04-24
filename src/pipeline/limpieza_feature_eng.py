@@ -360,7 +360,7 @@ class DataEngineer:
         """
         self.generate_features()
     
-        return self.other_dict, self.scaler, self.encoder
+        return self.other_dict, self.trained_scaler, self.trained_encoder
 
     def get_feature_engineering_metadata(self):
         """
