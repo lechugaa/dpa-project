@@ -374,13 +374,46 @@ class DataEngineer:
             self.y_consec = self.y_consec.apply(lambda x: 1 if x in ['pass'] else 0 ) 
         
     def _save_df(self):
-        local_path = get_file_path(self.historic, self.query_date, self.prefix)
-        pickle.dump(self.df, open(local_path, 'wb'))
-        print(f"Succesfully saved temp file as pickle in: {local_path}")
-
+        
+        #OJO: Es necesario pensar cómo almacenar los diferentes sets, 
+        ## tal vez sea necesario un prefijo
+        
+        if self.training:
+        
+            local_path = get_file_path(self.historic, self.query_date, self.prefix)
+            pickle.dump(self.X_train, open(local_path, 'wb'))
+            print(f"Succesfully saved temp file as pickle in: {local_path}")
+            
+        else:
+            local_path = get_file_path(self.historic, self.query_date, self.prefix)
+            pickle.dump(self.X_consec, open(local_path, 'wb'))
+            print(f"Succesfully saved temp file as pickle in: {local_path}")
+            
+            
+    def _save_transformers(self):
+        
+        if self.training:
+            
+            root_path = os.getcwd()
+        
+            path = f"{root_path}/temp/other_dict.pkl"
+            save_to_pickle(self.other_dict, path)
+        
+            path = f"{root_path}/temp/trained_scaler.pkl"
+            save_to_pickle(self.trained_scaler, path)
+        
+            path = f"{root_path}/temp/trained_encoder.pkl"
+            save_to_pickle(self.trained_encoder, path)
+                
+            print(f"Succesfully saved transformers as pickles in: {root_path}/temp/") 
+            
+        else:
+            
+            print("Transformers are not saved when Training = False")
+            
         
     # Luigi's interface methods
-    def generate_features(self, save=False):
+    def generate_features(self, save_df=False, save_transformers = True):
         """
         Genera el self.df a partir de los datos post-limpieza (los toma de S3)
         Este self.df ya debe contener todos los features que se quieren agregar
@@ -388,7 +421,17 @@ class DataEngineer:
         :param save: booleano que determina si se guarda localmente o no el df
         """
         
-        # Agrega código MH
+        if self.training is False:
+            root_path = os.getcwd()
+            path = f"{root_path}/temp/other_dict.pkl"
+            self.other_dict = load_from_pickle(path)
+        
+            path = f"{root_path}/temp/trained_scaler.pkl"
+            self.trained_scaler = load_from_pickle(path)
+        
+            path = f"{root_path}/temp/trained_encoder.pkl"
+            self.trained_encoder = load_from_pickle(path)
+            
         self._split_data()
         self._get_date_features()
         self._change_vars_other()
@@ -396,10 +439,19 @@ class DataEngineer:
         self._encode_data_onehot()
         self._drop_useless_cols()
         self._change_labels_y()
-        #
-        self.final_rows, self.final_cols = self.X_train.shape #Ojo con esto
-        if save:
+
+        if self.training:
+            self.final_rows, self.final_cols = self.X_train.shape #Ojo con esto
+                
+        else:
+            self.final_rows, self.final_cols = self.X_consec.shape #Ojo con esto
+            
+        if save_df:
             self._save_df()
+            
+        if save_transformers:
+            self._save_transformers()
+            
 
     def get_featured_df(self):
         """
@@ -407,56 +459,46 @@ class DataEngineer:
         generate_features
         :return: data frame con los features añadidos
         """
-        self.generate_features()
-        #return self.df
-        return self.X_train, self.X_test, self.y_train, self.y_test
+        #self.generate_features()
+        
+        if self.training:
+            return self.X_train, self.X_test, self.y_train, self.y_test
     
-    def get_trained_preprocess(self):
+        else:
+            return self.X_consec, self.y_consec
+            
+    
+    def get_trained_transformers(self):
         """
-        Obtener los preprocessors entrenados con X_train
+        Obtener los transformers entrenados con X_train
         Para poder aplicarse a las ingestas consecutivas
         Obtiene:
             el diccionario de niveles para step_other
             el scaler entrenado
             el enconder entrenado
         """
-        self.generate_features()
+        if self.training:
+            print("Fetching recently trained transformers...")
         
-        root_path = os.getcwd()
+            #self.generate_features()
+            
+        else:
+            print("Loading locally saved transformers...")
+                
+            root_path = os.getcwd()
         
-        path = f"{root_path}/temp/other_dict.pkl"
-        save_to_pickle(self.other_dict, path)
+            path = f"{root_path}/temp/other_dict.pkl"
+            self.other_dict = load_from_pickle(path)
         
-        path = f"{root_path}/temp/trained_scaler.pkl"
-        save_to_pickle(self.trained_scaler, path)
+            path = f"{root_path}/temp/trained_scaler.pkl"
+            self.trained_scaler = load_from_pickle(path)
         
-        path = f"{root_path}/temp/trained_encoder.pkl"
-        save_to_pickle(self.trained_encoder, path)
-        
+            path = f"{root_path}/temp/trained_encoder.pkl"
+            self.trained_encoder = load_from_pickle(path)
+            
         return self.other_dict, self.trained_scaler, self.trained_encoder
+                
     
-    def get_featured_prediction_df(self):
-        
-        root_path = os.getcwd()
-        path = f"{root_path}/temp/other_dict.pkl"
-        self.other_dict = load_from_pickle(path)
-        
-        path = f"{root_path}/temp/trained_scaler.pkl"
-        self.trained_scaler = load_from_pickle(path)
-        
-        path = f"{root_path}/temp/trained_encoder.pkl"
-        self.trained_encoder = load_from_pickle(path)
-        
-        self._split_data()
-        self._get_date_features()
-        self._change_vars_other()
-        self._scale_vars()
-        self._encode_data_onehot()
-        self._drop_useless_cols()
-        self._change_labels_y()
-        
-        return self.X_consec, self.y_consec
-        
 
     def get_feature_engineering_metadata(self):
         """
