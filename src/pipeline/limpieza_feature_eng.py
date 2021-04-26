@@ -378,14 +378,27 @@ class DataEngineer:
         #OJO: Es necesario pensar cómo almacenar los diferentes sets, 
         ## tal vez sea necesario un prefijo
         
+        if self.query_date is None:
+            date_string = datetime.datetime.now().strftime("%Y-%m-%d")
+        else:
+            date_string = self.query_date.strftime("%Y-%m-%d")
+        
         if self.training:
         
-            local_path = get_file_path(self.historic, self.query_date, self.prefix)
-            pickle.dump(self.X_train, open(local_path, 'wb'))
+            compact_data = {'X_train':self.X_train, 'X_test': self.X_test, 'y_train': self.y_train, 'y_test': self.y_test}
+            
+            root_path = os.getcwd()
+            local_path = f"{root_path}/temp/{self.prefix}-dataset-{date_string}-training.pkl"
+            pickle.dump(compact_data, open(local_path, 'wb'))
             print(f"Succesfully saved temp file as pickle in: {local_path}")
             
         else:
-            local_path = get_file_path(self.historic, self.query_date, self.prefix)
+            
+            compact_data = {'X_consec':self.X_consec, 'y_consec': self.y_consec}
+            
+            root_path = os.getcwd()
+            local_path = f"{root_path}/temp/{self.prefix}-dataset-{date_string}-prediction.pkl"
+            
             pickle.dump(self.X_consec, open(local_path, 'wb'))
             print(f"Succesfully saved temp file as pickle in: {local_path}")
             
@@ -441,10 +454,13 @@ class DataEngineer:
         self._change_labels_y()
 
         if self.training:
-            self.final_rows, self.final_cols = self.X_train.shape #Ojo con esto
+            self.final_rows = self.X_train.shape[0] + self.X_test.shape[0]
+            
+            self.final_cols = self.X_train.shape[1] + 1
                 
         else:
             self.final_rows, self.final_cols = self.X_consec.shape #Ojo con esto
+            self.final_cols += 1
             
         if save_df:
             self._save_df()
@@ -510,4 +526,4 @@ class DataEngineer:
             self.query_date = datetime.datetime.now()
 
         return [(self.original_rows, self.original_cols, self.final_rows,
-                 self.final_cols, self.historic, self.query_date)]
+                 self.final_cols, self.historic, self.query_date, self.training)] #Toño
