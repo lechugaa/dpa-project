@@ -44,8 +44,9 @@ class DataCleaner:
         self.df = self.df.astype({"zip": 'str'})
 
     def _clean_results(self):
-        self.df['results'].mask(self.df['results'] !=
-                                'Pass', other='Not Pass', inplace=True)
+        self.df['Pass'] = 'pass'
+        self.df['results'] = self.df['Pass'].where(self.df['results'].isin(['Pass', 'Pass w/ Conditions']), 'not_pass')
+        self.df.drop(columns = ['Pass'], inplace = True)
 
     def _standardize_column_strings(self, columns, excluded_punctuation=".,-*'¿?¡!()", gap_punct="\/"):
         for col in columns:
@@ -179,7 +180,7 @@ class DataCleaner:
         self.df.dropna(axis = 0, inplace = True)
         self._change_data_types()
         self._clean_results()
-        self._standardize_column_strings(['facility_type', 'risk', 'inspection_type', 'results'])
+        self._standardize_column_strings(['facility_type', 'risk', 'inspection_type'])
         self._drop_risk_all()
         self._clean_facility_type()
         self._clean_inspection_type()
@@ -197,7 +198,7 @@ class DataCleaner:
         print(f"Successfully saved temp file as pickle in: {local_path}")
 
     def get_clean_df(self):
-        self.clean_data()
+        #self.clean_data()
         return self.df
 
     def get_cleaning_metadata(self):
