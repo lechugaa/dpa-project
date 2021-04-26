@@ -10,6 +10,7 @@ class FeatureEngineeringMetaTask(CopyToTable):
 
     # parameters
     historic = luigi.BoolParameter(default=False)
+    training = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
 
     # recuperando credenciales de base de datos
@@ -31,14 +32,15 @@ class FeatureEngineeringMetaTask(CopyToTable):
                ("final_rows", "INT"),
                ("final_cols", "INT"),
                ("historic", "BOOLEAN"),
-               ("ingestion_date", "DATE")]
+               ("ingestion_date", "DATE"),
+               ("training", "BOOLEAN")]
 
     def requires(self):
-        return FeatureEngTestTask(historic=self.historic, query_date=self.query_date)
+        return FeatureEngTestTask(historic=self.historic, query_date=self.query_date, training=self.training)
 
     def rows(self):
-        fe = DataEngineer(self.historic, self.query_date)
-        fe.generate_features()
+        fe = DataEngineer(historic=self.historic, query_date=self.query_date, training=self.training)
+        fe.generate_features(save_df=False, save_transformers=False)
         rows = fe.get_feature_engineering_metadata()
         for row in rows:
             yield row

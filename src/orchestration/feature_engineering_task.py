@@ -40,7 +40,7 @@ class FeatureEngineeringTask(luigi.Task):
             aws_secret_access_key=s3_credentials['aws_secret_access_key']
         )
 
-        upload_path = get_upload_path(historic=self.historic, query_date=self.query_date, prefix=DataEngineer.prefix)
+        upload_path = get_upload_path(historic=self.historic, query_date=self.query_date, prefix=DataEngineer.prefix, training=self.training)
         output_path = f"s3://{bucket_name}/{upload_path}"
 
         return luigi.contrib.s3.S3Target(path=output_path, client=client)

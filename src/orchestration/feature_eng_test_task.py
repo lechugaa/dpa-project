@@ -10,6 +10,7 @@ class FeatureEngTestTask(CopyToTable):
 
     # parameters
     historic = luigi.BoolParameter(default=False)
+    training = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
 
     # recuperando credenciales de base de datos
@@ -30,10 +31,10 @@ class FeatureEngTestTask(CopyToTable):
                ("test_name", "VARCHAR(250)")]
 
     def requires(self):
-        return FeatureEngineeringTask(historic=self.historic, query_date=self.query_date)
+        return FeatureEngineeringTask(historic=self.historic, query_date=self.query_date, training=self.training)
 
     def rows(self):
-        tester = FeatureTester(historic=self.historic, query_date=self.query_date)
+        tester = FeatureTester(historic=self.historic, query_date=self.query_date, training=self.training)
         results = tester()
         if len(results.failures) > 0:
             for failure in results.failures:

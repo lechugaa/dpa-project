@@ -357,14 +357,12 @@ class DataEngineer:
 
             onehot_train = pd.DataFrame(encoder.fit_transform(self.X_train[['inspection_type', 'facility_type', 'zip', 'risk','dow','month']]))
             onehot_train.columns = encoder.get_feature_names(['inspection_type', 'facility_type', 'zip', 'risk','dow','month'])
-            onehot_train
 
             self.X_train.drop(columns = ['inspection_type', 'facility_type', 'zip', 'risk','dow','month'], inplace= True)
             self.X_train = pd.concat([self.X_train, onehot_train], axis = 1)
 
             onehot_test = pd.DataFrame(encoder.transform(self.X_test[['inspection_type', 'facility_type', 'zip', 'risk','dow','month']]))
             onehot_test.columns = encoder.get_feature_names(['inspection_type', 'facility_type', 'zip', 'risk','dow','month'])
-            onehot_test
 
             self.X_test.drop(columns = ['inspection_type', 'facility_type', 'zip', 'risk','dow','month'], inplace= True)
             
@@ -378,7 +376,6 @@ class DataEngineer:
             
             onehot_test = pd.DataFrame(encoder.transform(self.X_consec[['inspection_type', 'facility_type', 'zip', 'risk','dow','month']]))
             onehot_test.columns = encoder.get_feature_names(['inspection_type', 'facility_type', 'zip', 'risk','dow','month'])
-            onehot_test
             
             self.X_consec = pd.concat([self.X_consec, onehot_test], axis = 1)
 
@@ -403,15 +400,7 @@ class DataEngineer:
             self.y_consec = self.y_consec.apply(lambda x: 1 if x in ['pass'] else 0 ) 
         
     def _save_df(self):
-        
-        #OJO: Es necesario pensar cómo almacenar los diferentes sets, 
-        ## tal vez sea necesario un prefijo
-        
-        if self.query_date is None:
-            date_string = datetime.datetime.now().strftime("%Y-%m-%d")
-        else:
-            date_string = self.query_date.strftime("%Y-%m-%d")
-        
+
         if self.training:
         
             compact_data = {'X_train': self.X_train, 'X_test': self.X_test, 'y_train': self.y_train, 'y_test': self.y_test}
