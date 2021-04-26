@@ -45,7 +45,7 @@ class Modelling:
             
             
         
-    def _train_models(self):
+    def _magic_loop(self):
     
         algorithms_dict = {'tree': 'tree_grid_search',
                   'random_forest': 'rf_grid_search'}
@@ -83,7 +83,7 @@ class Modelling:
         
         self.best_estimators = best_estimators
         
-    def _compare_models(self, save = True):
+    def _seleccionar_modelo(self, save = True):
             
             if self.training: 
                 self.best_estimators
@@ -114,17 +114,21 @@ class Modelling:
             
             else:
                 print("Models are not trained when training = False")
+                
+                
+    def _entrenar_modelo_def(self):
             
-        def _predict_labels(self):
+            
+    def _predict_labels(self):
              
-             if self.training:
+        if self.training:
                  
-                 self.model_def.predict(self.X_test)
+            self.model_def.predict(self.X_test)
               
-             else:
+        else:
                  
-                 self.model = pickle.load(open("temp/saved_model_def.pkl"))
-                 self.model_def.predict(self.X_consec)
+            self.model = pickle.load(open("temp/saved_model_def.pkl"))
+            self.model_def.predict(self.X_consec)
         
         
         def train_model(self):
