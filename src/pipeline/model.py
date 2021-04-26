@@ -51,16 +51,49 @@ estimators_dict = {'tree': DecisionTreeClassifier(random_state=1111),
                    'random_forest': RandomForestClassifier(oob_score=True, random_state=2222)}
 
 
+
+#os.chdir(path + '/output')
+data_dict = pickle.load(open("temp/feature-engineering-dataset-2021-02-22-training.pkl",'rb')) #leer el diccionario de la task anterior (feature-engineering)
+X_train = data_dict['X_train'].head(500)
+y_train = data_dict['y_train'].head(500)
+X_test = data_dict['X_test']
+y_test = data_dict['y_test']
+
+
+best_estimators = []
+
+algorithms = ['tree', 'random_forest']
+
+for algorithm in algorithms:
+    estimator = estimators_dict[algorithm]
+    grid_search_to_look = algorithms_dict[algorithm]
+    grid_params = grid_search_dict[grid_search_to_look]
+        
+    gs = GridSearchCV(estimator, grid_params, scoring='precision', cv=5, n_jobs=-1)
+        
+     #train
+    gs.fit(X_train, y_train)
+        #best estimator
+    best_estimators.append(gs)
+
+
+gs
+
+best_estimators[0].fit
+best_estimators[0].best_estimator_
+best_estimators[0].best_score_
+
+
+
+
+
+
+
+
 # PRIMERO QUIERO CARGAR LOS DATOS DEL PICKLE
 # Aquí se puede hacer el método que carga el picke de la task anterior (como MARIO)
 
 def load_features_labels(path):
-    os.chdir(path + '/output')
-    data_dict = pickle.load(open("temp/feature-engineering-dataset-2021-02-22-training.pkl",'rb')) #leer el diccionario de la task anterior (feature-engineering)
-    X_train = data_dict['X_train']
-    y_train = data_dict['y_train']
-    X_test = data_dict['X_test']
-    y_test = data_dict['y_test']
     return X_train, y_train, X_test, y_test
 
 def magic_loop(algorithms, features, labels):
