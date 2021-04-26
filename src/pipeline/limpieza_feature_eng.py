@@ -325,7 +325,35 @@ class DataEngineer:
     def _encode_data_onehot(self):
         
         if self.training:
-            encoder = OneHotEncoder(sparse = False)
+            
+            inspection_types = ['canvas', 'complaint', 'consultation',
+                    'license','suspected_food_poisoning', 'tag_removal', 'other']
+
+            facility_types =['assisted_living', 'bakery', 'bar', 'catering',
+                             'childrens_service_facility', 'daycare', 'grocery_store',
+                             'hospital', 'liquor', 'na', 'other_food', 'restaurant',
+                             'school', 'wholesale', 'other']
+
+            zips = ['60601', '60602', '60603', '60604', '60605', '60606', '60607',
+                    '60608', '60609', '60610', '60611', '60612', '60613', '60614',
+                    '60615', '60616', '60617', '60618', '60619', '60620', '60621',
+                    '60622', '60623', '60624', '60625', '60626', '60628', '60629',
+                    '60630', '60631', '60632', '60634', '60636', '60637', '60638',
+                    '60639', '60640', '60641', '60642', '60643', '60644', '60645',
+                    '60646', '60647', '60649', '60651', '60652', '60653', '60654',
+                    '60655', '60656', '60657', '60659', '60660', '60661', '60666',
+                    '60707', 'other']
+
+            risks = ['risk_1_high', 'risk_2_medium', 'risk_3_low']
+
+            dows = ['monday', 'tuesday','wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+            months =['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+            
+            encoder = OneHotEncoder(sparse = False,
+                        categories= [inspection_types, facility_types,
+                                     zips, risks, dows, months],
+                        handle_unknown ='ignore')
 
             onehot_train = pd.DataFrame(encoder.fit_transform(self.X_train[['inspection_type', 'facility_type', 'zip', 'risk','dow','month']]))
             onehot_train.columns = encoder.get_feature_names(['inspection_type', 'facility_type', 'zip', 'risk','dow','month'])
