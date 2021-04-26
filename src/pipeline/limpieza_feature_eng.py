@@ -414,21 +414,17 @@ class DataEngineer:
         
         if self.training:
         
-            compact_data = {'X_train':self.X_train, 'X_test': self.X_test, 'y_train': self.y_train, 'y_test': self.y_test}
+            compact_data = {'X_train': self.X_train, 'X_test': self.X_test, 'y_train': self.y_train, 'y_test': self.y_test}
             
-            root_path = os.getcwd()
-            local_path = f"{root_path}/temp/{self.prefix}-dataset-{date_string}-training.pkl"
+            local_path = get_file_path(historic=self.historic, query_date=self.query_date, prefix=self.prefix, training=self.training)
             pickle.dump(compact_data, open(local_path, 'wb'))
             print(f"Succesfully saved temp file as pickle in: {local_path}")
             
         else:
             
-            compact_data = {'X_consec':self.X_consec, 'y_consec': self.y_consec}
-            
-            root_path = os.getcwd()
-            local_path = f"{root_path}/temp/{self.prefix}-dataset-{date_string}-prediction.pkl"
-            
-            pickle.dump(self.X_consec, open(local_path, 'wb'))
+            compact_data = {'X_consec': self.X_consec, 'y_consec': self.y_consec}
+            local_path = get_file_path(historic=self.historic, query_date=self.query_date, prefix=self.prefix, training=self.training)
+            pickle.dump(compact_data, open(local_path, 'wb'))
             print(f"Succesfully saved temp file as pickle in: {local_path}")
             
             
