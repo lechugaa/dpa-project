@@ -3,15 +3,17 @@
 """
 Created on Mon Apr 26 13:36:48 2021
 
-@author: mario
+@author: mario - cbautistap
 """
 import os
 import pickle
+import numpy as np
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import precision_recall_curve
 
 class Modelling:
     
@@ -84,7 +86,9 @@ class Modelling:
         self.best_estimators = best_estimators
         
     def _seleccionar_modelo(self, save = True):
-            
+            # AQUI METER TODO LO DE AUC DE CV (ver notebook)
+            # LUEGO METER TODO LO DE AUC Y PREDICCIONES CON BEST TREE Y BEST RF AQUI SE DEFINE EL MEJOR MODELO
+            # LUEGO 
             if self.training: 
                 self.best_estimators
             
