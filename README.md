@@ -19,7 +19,7 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
 1. [Estructura del proyecto](#estructura-del-proyecto)
 1. [Orquestación](#orquestación)
    1. [Ejemplo: Metadatos de entrenamiento con datos históricos](#ejemplo-metadatos-de-entrenamiento-de-modelo-con-datos-históricos-al-día-de-hoy)
-   1. [Ejemplo: Metadatos de selección de modelo con datos históricos](#ejemplo-metadatos-de-seleccóin-de-modelo-con-datos-históricos-al-día-20-de-abril-de-2021)
+   1. [Ejemplo: Metadatos de selección de modelo con datos históricos](#ejemplo-metadatos-de-selección-de-modelo-con-datos-históricos-al-día-20-de-abril-de-2021)
 1. [Proceso de ingesta manual](#proceso-de-ingesta-manual)
    1. [Ingesta histórica](#ingesta-histórica)
    1. [Ingesta consecutiva](#ingesta-consecutiva)
@@ -210,7 +210,8 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
 
 El proyecto actualmente cuenta con 18 tasks de orquestación. A continuación se muestra el DAG de Luigi:
 
-![DAG de Luigi](img/luigi_dag_c5_1.png "DAG de Luigi P1") ![DAG de Luigi](img/luigi_dag_c5_2.png "DAG de Luigi P2") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
+![DAG de Luigi](img/luigi_dag_c5_1.png "DAG de Luigi P1") 
+![DAG de Luigi](img/luigi_dag_c5_2.png "DAG de Luigi P2") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
 
 Para ejecutar cualquiera de los siguientes tasks, una vez que se siguieron 
 [las instrucciones de configuración](#configuración), se requiere introducir la siguiente línea de comandos:
