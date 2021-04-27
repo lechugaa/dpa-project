@@ -1,11 +1,14 @@
 import pickle
 import time
+import numpy as np
+import pandas as pd
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve
 
-from src.utils.general import get_dictionary_from_s3, get_file_path
+from src.utils.general import get_dictionary_from_s3, get_file_path, load_from_pickle
 
 
 class Modelling:
@@ -122,3 +125,100 @@ class Modelling:
     #         self._train_models()
     #         self._compare_models()
     #         self._predict_labels()
+
+
+class ModelSelector:
+
+    prefix = "model-selection"
+
+    def __init__(self, historic, query_date, fpr_restriction=0.05, save_model=False):
+        self.historic = historic
+        self.query_date = query_date
+        self.prefix = ModelSelector.prefix
+        self.fpr_restriction = fpr_restriction
+        self.save_model = save_model
+
+        # llamadas de métodos
+        self._get_trained_models()
+        self._get_data()
+        self._evaluate_models()
+        self._get_cutting_threshold()
+        if self.save_model:
+            self._save_model()
+        self.get_selection_metadata()
+
+    def _get_trained_models(self):
+        file_path = get_file_path(historic=self.historic, query_date=self.query_date, prefix=Modelling.prefix, training=False)
+        self.models = load_from_pickle(file_path)
+
+    def _get_data(self):
+        data_dict = get_dictionary_from_s3(historic=self.historic, query_date=self.query_date, training=True)
+        self.x_train = data_dict['X_train']
+        self.y_train = data_dict['y_train']
+        self.x_test = data_dict['X_test']
+        self.y_test = data_dict['y_test']
+
+    def _evaluate_models(self):
+        best_auc = -1
+        best_model = None
+        best_label_scores = None
+        best_fpr = None
+        best_tpr = None
+        best_thresholds = None
+
+        for model in self.models:
+            model.fit(self.x_train, self.y_train)
+            label_scores = model.predict_proba(self.x_test)
+            auc = roc_auc_score(self.y_test, label_scores[:, 1])
+            fpr, tpr, thresholds = roc_curve(self.y_test, label_scores[:, 1], pos_label=1)
+
+            if auc > best_auc:
+                best_auc = auc
+                best_model = model
+                best_label_scores = label_scores
+                best_fpr = fpr
+                best_tpr = tpr
+                best_thresholds = thresholds
+
+        self.best_auc = best_auc
+        self.best_model = best_model
+        self.label_scores = best_label_scores
+        self.fpr = best_fpr
+        self.tpr = best_tpr
+        self.thresholds = best_thresholds
+
+    def _save_model(self):
+        local_path = get_file_path(historic=self.historic, query_date=self.query_date, prefix=self.prefix)
+        pickle.dump(self.best_model, open(local_path, 'wb'))
+        print(f"Successfully saved best model as pickle in: {local_path}")
+
+    def _get_metrics_report(self, precision, recall, thresholds_2):
+        df_1 = pd.DataFrame({'threshold': thresholds_2, 'precision': precision, 'recall': recall})
+        df_1['f1_score'] = 2 * (df_1.precision * df_1.recall) / (df_1.precision + df_1.recall)
+
+        df_2 = pd.DataFrame({'tpr': self.tpr, 'fpr': self.fpr, 'threshold': self.thresholds})
+        df_2['tnr'] = 1 - df_2['fpr']
+        df_2['fnr'] = 1 - df_2['tpr']
+
+        return df_1.merge(df_2, on="threshold")
+
+    def _get_cutting_threshold(self):
+        precision, recall, thresholds_2 = precision_recall_curve(self.y_test, self.label_scores[:, 1], pos_label=1)
+        thresholds_2 = np.append(thresholds_2, 1)
+        metrics_report = self._get_metrics_report(precision, recall, thresholds_2)
+        negocio = metrics_report[metrics_report.fpr <= self.fpr_restriction]
+        self.cutting_threshold = negocio.head(1).threshold.values[0]
+
+    def get_selection_metadata(self):
+        best_model_desc = str(self.best_model)
+        possible_models = len(self.models)
+
+        metadata = [(self.historic,
+                     self.query_date,
+                     best_model_desc,
+                     possible_models,
+                     self.cutting_threshold,
+                     self.fpr_restriction,
+                     self.best_auc)]
+
+        return metadata
