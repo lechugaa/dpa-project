@@ -262,7 +262,7 @@ PYTHONPATH='.' luigi --module src.orchestration.training_metadata_task TrainingM
 ### Ejemplo: Metadatos de selección de modelo con datos históricos al día 20 de abril de 2021
 
 ```
-PYTHONPATH='.' luigi --module src.orchestration.selection_metadata_task SelectionMetaTask --local-scheduler --query-date 2021-04-20
+PYTHONPATH='.' luigi --module src.orchestration.selection_metadata_task SelectionMetaTask --local-scheduler --historic --query-date 2021-04-20
 ```
 
 ## Proceso de ingesta manual
