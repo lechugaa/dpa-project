@@ -1,4 +1,5 @@
 import pickle
+import time
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -11,6 +12,7 @@ class Modelling:
     prefix = 'modelling'
     algorithms = ['tree', 'random_forest']
     algorithms_dict = {'tree': 'tree_grid_search', 'random_forest': 'rf_grid_search'}
+    split_criteria = 'gini'
     grid_search_dict = {'tree_grid_search': {'max_depth': [5, 10, 15], 'min_samples_leaf': [3, 5, 7]},
                         'rf_grid_search': {'n_estimators': [300, 400], 'max_depth': [7, 10],
                                            'min_samples_split': [3], 'max_features': [10, 15, 20],
@@ -36,7 +38,9 @@ class Modelling:
         self.y_test = data_dict['y_test']
 
     def _magic_loop(self):
+        start_time = time.time()
         self.best_estimators = []
+
         for algorithm in Modelling.algorithms:
             estimator = Modelling.estimators_dict[algorithm]
             grid_search_to_look = Modelling.algorithms_dict[algorithm]
@@ -47,6 +51,8 @@ class Modelling:
             gs.fit(self.x_train, self.y_train)
             self.best_estimators.append(gs.best_estimator_)
 
+        self.training_time = time.time() - start_time
+
     def _save_models(self):
         local_path = get_file_path(historic=self.historic, query_date=self.query_date, prefix=self.prefix)
         pickle.dump(self.best_estimators, open(local_path, 'wb'))
@@ -54,6 +60,11 @@ class Modelling:
 
     def get_models(self):
         return self.best_estimators
+
+    def get_modeling_metadata(self):
+        no_of_model = len(Modelling.algorithms)
+        algorithms = '-'.join(self.algorithms)
+        return [(self.historic, self.query_date, no_of_model, algorithms, self.training_time, self.split_criteria)]
 
     # def _seleccionar_modelo(self, save = True):
     #         # AQUI METER TODO LO DE AUC DE CV (ver notebook)
