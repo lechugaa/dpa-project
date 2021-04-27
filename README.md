@@ -18,8 +18,8 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
    1. [Base de datos](#base-de-datos)
 1. [Estructura del proyecto](#estructura-del-proyecto)
 1. [Orquestación](#orquestación)
-   1. [Ejemplo: Metadatos de limpieza histórica](#ejemplo-metadatos-de-limpieza-histórica-del-día-19-de-abril-de-2021)
-   1. [Ejemplo: Metadatas de feature engineering continuo](#ejemplo-metadatos-de-feature-engineering-continuo-del-día-de-hoy)
+   1. [Ejemplo: Metadatos de entrenamiento con datos históricos](#ejemplo-metadatos-de-entrenamiento-de-modelo-con-datos-históricos-al-día-de-hoy)
+   1. [Ejemplo: Metadatos de selección de modelo con datos históricos](#ejemplo-metadatos-de-seleccóin-de-modelo-con-datos-históricos-al-día-20-de-abril-de-2021)
 1. [Proceso de ingesta manual](#proceso-de-ingesta-manual)
    1. [Ingesta histórica](#ingesta-histórica)
    1. [Ingesta consecutiva](#ingesta-consecutiva)
@@ -181,7 +181,19 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
     │
     ├── pipeline
     │    ├── ingesta_almacenamiento.py                <- ingesta datos desde API y almacenamiento en S3
-    │    └── limpieza_feature_engineering.py          <- limpieza y generación de features de modelo
+    │    ├── limpieza_feature_engineering.py          <- limpieza y generación de features de modelo
+    │    ├── deprecated_funs.py                       <- funciones que probablemente no se necesiten
+    │    └── modelling.py                             <- entrenamiento y selección de modelo
+    │
+    │
+    ├── tests
+    │    ├── ingestion_tests.py                       <- pruebas unitarias para ingestión
+    │    ├── upload_tests.py                          <- pruebas unitarias para almacenamiento
+    │    ├── clean_data_tests.py                      <- pruebas unitarias para limpieza y preprocesamiento
+    │    ├── feature_eng_tests.py                     <- pruebas unitarias para feature engineering
+    │    ├── training_tests.py                        <- pruebas unitarias para entrenamiento
+    │    └── selection_tests.py                       <- pruebas unitarias para selección de modelo
+    │
     │
     └── orchestration                                 <- Luigi task definitions used across the project
          ├── data_ingestion_task.py                   <- Luigi task for data ingestion
@@ -196,9 +208,9 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
 
 ## Orquestación
 
-El proyecto actualmente cuenta con ocho tasks de orquestación. A continuación se muestra el DAG de Luigi:
+El proyecto actualmente cuenta con 18 tasks de orquestación. A continuación se muestra el DAG de Luigi:
 
-![DAG de Luigi](img/luigi_dag_c4.png "DAG de Luigi") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
+![DAG de Luigi](img/luigi_dag_c5_1.png "DAG de Luigi P1") ![DAG de Luigi](img/luigi_dag_c5_2.png "DAG de Luigi P2") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
 
 Para ejecutar cualquiera de los siguientes tasks, una vez que se siguieron 
 [las instrucciones de configuración](#configuración), se requiere introducir la siguiente línea de comandos:
@@ -217,30 +229,39 @@ PYTHONPATH='.' luigi --module src.orchestration.<NOMBRE_DE_SCRIPT> <NOMBRE_DE_CL
 La siguiente tabla se detallan todos los tasks del proyecto así como el `NOMBRE_DE_SCRIPT` y `NOMBRE_DE_CLASE` que 
 se requieren para ejecutarlo.
 
-|        Etapa        |               Tarea              |                 Script                 |             Clase            | Descripción                                                                        |
-|:-------------------:|:--------------------------------:|:--------------------------------------:|:----------------------------:|------------------------------------------------------------------------------------|
-|       Ingesta       |              Ingesta             |        `data_ingestion_task`           |      `DataIngestionTask`     | Guardar localmente en formato pickle los datos solicitados de la API de Chicago.   |
-|       Ingesta       |       Metadatos de ingesta       |      `ingestion_metadata_task`         |    `IngestionMetadataTask`   | Genera los metadatos de `DataIngestionTask`.                                       |
-|    Almacenamiento   |          Almacenamiento          |        `data_s3_upload_task`           |      `DataS3UploadTask`      | Sube a S3 la ingesta de datos obtenida en la `DataIngestionTask`.                  |
-|    Almacenamiento   |    Metadatos de almacenamiento   |    `data_s3_upload_metadata_task`      |     `UploadMetadataTask`     | Genera los metadatos de `DataS3UploadTask`.                                        |
-|       Limpieza      |             Limpieza             |          `clean_data_task`             |        `CleanDataTask`       | Realiza la limpieza de los datos guardados en `DataS3UploadTask`.                  |
-|       Limpieza      |        Metadatos limpieza        |      `clean_data_metadata_task`        |      `CleanDataMetaTask`     | Genera los metadatos de `CleanDataTask`.                                           |
-| Feature engineering |        Feature engineering       |      `feature_engineering_task`        |   `FeatureEngineeringTask`   | Genera los features requeridos empleando los datos generados en `CleanDataTask`.   |
-| Feature engineering | Metadatos de feature engineering | `feature_engineering_metadata_task`    | `FeatureEngineeringMetaTask` | Genera los metadatos de `FeatureEngineeringTask`.                                  |
 
+| Etapa               | Tarea                                    | Script                              | Clase                        | Descripción                                                                      |
+|:-------------------:|:----------------------------------------:|:-----------------------------------:|:----------------------------:|----------------------------------------------------------------------------------|
+| Ingesta             | Ingesta                                  | `data_ingestion_task`               | `DataIngestionTask`          | Guardar localmente en formato pickle los datos solicitados de la API de Chicago. |
+| Ingesta             | Pruebas unitarias de ingesta             | `ingestion_testing_task`            | `IngestionTesting`           | Realiza las pruebas unitarias de ingesta.                                        |
+| Ingesta             | Metadatos de ingesta                     | `ingestion_metadata_task`           | `IngestionMetadataTask`      | Genera los metadatos de `DataIngestionTask`.                                     |
+| Almacenamiento      | Almacenamiento                           | `data_s3_upload_task`               | `DataS3UploadTask`           | Sube a S3 la ingesta de datos obtenida en la `DataIngestionTask`.                |
+| Almacenamiento      | Pruebas unitarias de almacenamiento      | `data_s3_upload_testing_task`       | `DataS3UploadTestingTask`    | Realiza las pruebas unitarias de almacenamiento.                                 |
+| Almacenamiento      | Metadatos de almacenamiento              | `data_s3_upload_metadata_task`      | `UploadMetadataTask`         | Genera los metadatos de `DataS3UploadTask`.                                      |
+| Limpieza            | Limpieza                                 | `clean_data_task`                   | `CleanDataTask`              | Realiza la limpieza de los datos guardados en `DataS3UploadTask`.                |
+| Limpieza            | Pruebas unitarias de limpieza            | `clean_data_test_task`              | `CleanDataTestTask`          | Realiza las pruebas unitarias de limpieza.                                       |
+| Limpieza            | Metadatos limpieza                       | `clean_data_metadata_task`          | `CleanDataMetaTask`          | Genera los metadatos de `CleanDataTask`.                                         |
+| Feature engineering | Feature engineering                      | `feature_engineering_task`          | `FeatureEngineeringTask`     | Genera los features requeridos empleando los datos generados en `CleanDataTask`. |
+| Feature engineering | Pruebas unitarias de feature engineering | `feature_eng_test_task`             | `FeatureEngTestTask`         | Realiza las pruebas unitarias de feature engineering.                            |
+| Feature engineering | Metadatos de feature engineering         | `feature_engineering_metadata_task` | `FeatureEngineeringMetaTask` | Genera los metadatos de `FeatureEngineeringTask`.                                |
+| Entrenamiento       | Entrenamiento                            | `training_task`                     | `TrainingTask`               | Realiza el entrenamiento de los modelos y los sube a S3.                         |
+| Entrenamiento       | Pruebas unitarias de entrenamiento       | `training_test_task`                | `TrainingTestTask`           | Realiza las pruebas unitarias de entrenamiento.                                  |
+| Entrenamiento       | Metadatos entrenamiento                  | `training_metadata_task `           | `TrainingMetaTask`           | Genera los metadatos de `TrainingTestTask`.                                      |
+| Selección           | Selección                                | `selection_task`                    | `SelectionTask`              | A partir de los modelos entrenados selecciona el mejor basado en AUC.            |
+| Selección           | Pruebas unitarias de selección           | `selection_test_task`               | `SelectionTestTask`          | Realiza las pruebas unitarias de selección                                       |
+| Selección           | Metadatos de selección                   | `selection_metadata_task`           | `SelectionMetaTask`          | Genera los metadatos de `SelectionTask`.                                         |
 
-Algunos ejemplos son:
+Algunos ejemplos (adecuados para el checkpoint 5) son:
 
-### Ejemplo: Metadatos de limpieza histórica del día 19 de abril de 2021
+### Ejemplo: Metadatos de entrenamiento de modelo con datos históricos al día de *hoy*
+```
+PYTHONPATH='.' luigi --module src.orchestration.training_metadata_task TrainingMetaTask --local-scheduler --historic
+```
+
+### Ejemplo: Metadatos de selección de modelo con datos históricos al día 20 de abril de 2021
 
 ```
-PYTHONPATH='.' luigi --module src.orchestration.clean_data_metadata_task CleanDataMetaTask --local-scheduler --historic --query-date 2021-04-19
-```
-
-### Ejemplo: Metadatos de feature engineering continuo del 20 de abril del 2021
-
-```
-PYTHONPATH='.' luigi --module src.orchestration.feature_engineering_metadata_task FeatureEngineeringMetaTask --local-scheduler --query-date 2021-04-20
+PYTHONPATH='.' luigi --module src.orchestration.selection_metadata_task SelectionMetaTask --local-scheduler --query-date 2021-04-20
 ```
 
 ## Proceso de ingesta manual
