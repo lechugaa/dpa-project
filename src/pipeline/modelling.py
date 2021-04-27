@@ -69,63 +69,6 @@ class Modelling:
         algorithms = '-'.join(self.algorithms)
         return [(self.historic, self.query_date, no_of_model, algorithms, self.training_time, self.split_criteria)]
 
-    # def _seleccionar_modelo(self, save = True):
-    #         # AQUI METER TODO LO DE AUC DE CV (ver notebook)
-    #         # LUEGO METER TODO LO DE AUC Y PREDICCIONES CON BEST TREE Y BEST RF AQUI SE DEFINE EL MEJOR MODELO
-    #         # LUEGO
-    #         if self.training:
-    #             self.best_estimators
-    #
-    #             self.y_test
-    #
-    #             self.threshold = 0.65
-    #
-    #             mod1 = evaluate(self.best_estimators[0].fit, self.y_test, threshold = self.threshold)
-    #             #evaluate() considera hacer predicciones y compararlas con y_test
-    #             mod2 = evaluate(self.best_estimators[1].fit, self.y_test, threshold = self.threshold)
-    #
-    #             if mod1.auc > mod2.auc:
-    #                 best_mod = mod1
-    #
-    #             else:
-    #                 best_mod = mod2
-    #
-    #
-    #             self.best_auc = best_mod.auc
-    #             self.used_metric = ['auc']
-    #             self.used_algo = best_mod.algorith
-    #             self.used_hyperparams = best_mod.hyperparams
-    #             self.model_def = best_mod
-    #
-    #             if save:
-    #                 pickle.dump(open(self.best_mod, 'temp/model_def.pkl'))
-    #
-    #         else:
-    #             print("Models are not trained when training = False")
-    #
-    #
-    # def _entrenar_modelo_def(self):
-    #
-    #
-    # def _predict_labels(self):
-    #
-    #     if self.training:
-    #
-    #         self.model_def.predict(self.X_test)
-    #
-    #     else:
-    #
-    #         self.model = pickle.load(open("temp/saved_model_def.pkl"))
-    #         self.model_def.predict(self.X_consec)
-    #
-    #
-    #     def train_model(self):
-    #
-    #         self._get_data()
-    #         self._train_models()
-    #         self._compare_models()
-    #         self._predict_labels()
-
 
 class ModelSelector:
 
