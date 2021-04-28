@@ -41,7 +41,7 @@ class SelectionTestTask(CopyToTable):
         if len(results.failures) > 0:
             for failure in results.failures:
                 print(failure)
-            raise Exception("Ingestion tests failed...")
+            raise Exception("Selection tests failed...")
 
         rows = [(str(datetime.date.today()), "selection-test")]
         for row in rows:
