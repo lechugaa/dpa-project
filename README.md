@@ -320,7 +320,7 @@ Las pruebas unitarias de entrenamiento son las siguientes:
 nuestro proyecto aún no entrena más de dos. Un ejemplo de este caso sería el siguiente comando:
 
 ```
-PYTHONPATH='.' luigi --module src.orchestration.training_metadata_task TrainingMetaTask --desired-models 10
+PYTHONPATH='.' luigi --module src.orchestration.training_metadata_task TrainingMetaTask --local-scheduler --desired-models 10
 ```
 
 Para pruebas rápidas se recomienda no incluir el flag de `--historic` para que el entrenamiento sea más rápido.
@@ -338,7 +338,7 @@ nuestros scripts de modelado están diseñados para solo generar esas dos etique
 caso sería el siguiente comando:
 
 ```
-PYTHONPATH='.' luigi --module src.orchestration.selection_metadata_task SelectionMetaTask --desired-classes '[0, 1, 2]'
+PYTHONPATH='.' luigi --module src.orchestration.selection_metadata_task SelectionMetaTask --local-scheduler --desired-classes '[0, 1, 2]'
 ```
 
 Para pruebas rápidas se recomienda no incluir el flag de `--historic` para que el entrenamiento sea más rápido.
