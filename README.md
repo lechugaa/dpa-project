@@ -20,6 +20,13 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
 1. [Orquestación](#orquestación)
    1. [Ejemplo: Metadatos de entrenamiento con datos históricos](#ejemplo-metadatos-de-entrenamiento-de-modelo-con-datos-históricos-al-día-de-hoy)
    1. [Ejemplo: Metadatos de selección de modelo con datos históricos](#ejemplo-metadatos-de-selección-de-modelo-con-datos-históricos-al-día-20-de-abril-de-2021)
+1. [Pruebas Unitarias](#pruebas-unitarias)
+   1. [Ingesta](#ingesta)
+   1. [Almacenamiento](#almacenamiento)
+   1. [Limpieza](#limpieza)
+   1. [Feature Engineering](#feature-engineering)
+   1. [Entrenamiento](#entrenamiento)
+   1. [Selección](#selección)
 1. [Proceso de ingesta manual](#proceso-de-ingesta-manual)
    1. [Ingesta histórica](#ingesta-histórica)
    1. [Ingesta consecutiva](#ingesta-consecutiva)
@@ -264,6 +271,78 @@ PYTHONPATH='.' luigi --module src.orchestration.training_metadata_task TrainingM
 ```
 PYTHONPATH='.' luigi --module src.orchestration.selection_metadata_task SelectionMetaTask --local-scheduler --historic --query-date 2021-04-20
 ```
+
+## Pruebas Unitarias
+
+### Ingesta
+
+Las pruebas unitarias de ingesta son las siguientes:
+
+* `test_number_of_columns`: verifica el número de columnas en la ingesta
+* `test_df_not_empty`: verifica que la ingesta no venga sin observaciones
+* `test_df_columns`: verifica por nombre que se cuente con todas las variables esperadas
+
+### Almacenamiento
+
+Las pruebas unitarias de almacenamiento son las siguientes:
+
+* `test_df_are_equal`: verifica que el contenido de la ingesta y del df almacenado en S3 sea idéntico renglón por renglón
+y tipos de datos
+  
+### Limpieza
+
+Las pruebas unitarias de limpieza son las siguientes:
+
+* `test_df_smaller_equal`: verifica que el dataframe post limpieza no tenga más variables que el que proviene de almacenamiento
+* `test_df_not_empty`: verifica que el dataframe no esté vacío
+* `test_df_smaller_rows`: verifica que el dataframe post limpieza no tenga más observaciones que el que proviene de almacenamiento
+* `test_df_columns`: verifica que las variables del df sean un subconjunto de las originales ingestadas
+ 
+### Feature Engineering
+
+Las pruebas unitarias de feature engineering son las siguientes:
+
+* `test_df_not_empty`: verifica que los siguientes dataframes existan en S3:
+  * x_train (en caso de activar el flag de `--training`)
+  * y_train (en caso de activar el flag de `--training`)
+  * x_test (en caso de activar el flag de `--training`)
+  * y_test (en caso de activar el flag de `--training`)
+  * self.X (en caso de no activar el flag de `--training`) lo que implica que se utilizará para predicción
+  * self.y (en caso de no activar el flag de `--training`) lo que implica que se utilizará para predicción
+  
+### Entrenamiento
+
+Las pruebas unitarias de entrenamiento son las siguientes:
+
+* `test_enough_models`: verifica que después del proceso de entrenamiento existan al menos dos modelos.
+
+*Nota:* si se solicita a la task de Luigi más de 2 modelos (por el momento) esta prueba unitaria falla, ya que 
+nuestro proyecto aún no entrena más de dos. Un ejemplo de este caso sería el siguiente comando:
+
+```
+PYTHONPATH='.' luigi --module src.orchestration.training_metadata_task TrainingMetaTask --desired-models 10
+```
+
+Para pruebas rápidas se recomienda no incluir el flag de `--historic` para que el entrenamiento sea más rápido.
+Para producción es obligatorio incluirlo.
+
+### Selección
+
+Las pruebas unitarias de selección son las siguientes:
+
+* `test_classes`: verifica que el modelo seleccionado tenga como output las clases 0 y 1, aunque se puede especificar
+otras en caso de que esto cambie en el futuro a través del parámetro `--desired-classes`.
+  
+*Nota:* si se solicita cualquier combinación de clases que no sean 0 y 1, esta prueba unitaria fallará, ya que 
+nuestros scripts de modelado están diseñados para solo generar esas dos etiquetas de predicción. Un ejemplo de este 
+caso sería el siguiente comando:
+
+```
+PYTHONPATH='.' luigi --module src.orchestration.selection_metadata_task SelectionMetaTask --desired-classes '[0, 1, 2]'
+```
+
+Para pruebas rápidas se recomienda no incluir el flag de `--historic` para que el entrenamiento sea más rápido.
+Para producción es obligatorio incluirlo.
 
 ## Proceso de ingesta manual
 
