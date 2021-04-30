@@ -50,7 +50,7 @@ class MrFairness:
         """
         self.model = get_object_from_s3(historic=self.historic, query_date=self.query_date,
                                         prefix=ModelSelector.prefix, training=False)
-        print(f"\n***Selected model in previous task: {self.model} ***")
+        print(f"\n*** Selected model in previous task: {self.model} ***")
         # nota: aquí es cuando encuentro confuso el parámetro  training: los modelos no lo tienen
         # y por eso no lo pueden heredar de la clase
 
@@ -68,7 +68,7 @@ class MrFairness:
 
         self.aequitas_df = pd.DataFrame({'score': self.predictions, 'label_value': self.labels,
                                          'facility_type': chosen_facilities})
-        print(f"\n***Successfully constructed aequitas dataframe with columns: {self.aequitas_df.columns.values} ***")
+        print(f"\n*** Successfully constructed aequitas dataframe with columns: {self.aequitas_df.columns.values} ***")
 
 
 
