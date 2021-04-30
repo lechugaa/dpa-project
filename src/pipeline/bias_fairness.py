@@ -15,7 +15,6 @@ from src.utils.general import get_object_from_s3
 class MrFairness:
 
     prefix = 'bias-fairness'
-    training = True
 
     def __init__(self, historic=False, query_date=None, training=True):
         self.historic = historic
@@ -50,7 +49,7 @@ class MrFairness:
         """
         self.model = get_object_from_s3(historic=self.historic, query_date=self.query_date,
                                         prefix=ModelSelector.prefix, training=False)
-        print(f"\n*** Selected model in previous task: {self.model} ***")
+        print(f"\n*** Successfully loaded model {self.model} ***")
         # nota: aquí es cuando encuentro confuso el parámetro  training: los modelos no lo tienen
         # y por eso no lo pueden heredar de la clase
 
