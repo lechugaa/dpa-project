@@ -37,9 +37,9 @@ class MrFairness:
 
         self.features = feature_eng_dict['X_test']
         self.labels = feature_eng_dict['y_test']
-        print(f""" *** Successfully features and labels from previous task. ***""")
+        print(f""" *** Successfully loaded features and labels from previous task. ***""")
         print(
-            f"""Features dataframe has {self.features.shape[0]} rows and {self.features.shape[1]} columns.""")
+            f"""\nFeatures dataframe has {self.features.shape[0]} rows and {self.features.shape[1]} columns.""")
 
     def _load_model(self):
         """
@@ -48,6 +48,6 @@ class MrFairness:
         """
         self.model = get_object_from_s3(historic=self.historic, query_date=self.query_date,
                                         prefix=ModelSelector.prefix, training=False)
-        print(f"*** Successfully loaded model {self.model} ***")
+        print(f"*** Selected model in previous task: {self.model} ***")
         # nota: aquí es cuando encuentro confuso el parámetro  training: los modelos no lo tienen
         # y por eso no lo pueden heredar de la clase
