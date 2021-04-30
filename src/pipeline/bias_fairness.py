@@ -34,23 +34,20 @@ class MrFairness:
         pickle_task_anterior = get_file_path(
             self.historic, self.query_date, prefix=DataEngineer.prefix, training=self.training)
         feature_eng_dict = load_from_pickle(pickle_task_anterior)
-        
+
         self.features = feature_eng_dict['X_test']
-        self.labels = feature_eng_dict['y_test']  
-        print(f""" *** Successfully retrieved {len(y_test)} observations from the testing set. ***""")
-    
+        self.labels = feature_eng_dict['y_test']
+        print(f""" *** Successfully features and labels from previous task. ***""")
+        print(
+            f"""Features dataframe has {self.features.shape[0]} rows and {self.features.shape[1]} columns.""")
+
     def _load_model(self):
         """
-        Realmente Aequitas necesita comparar las etiquetas reales con las predichas, 
+        Realmente Aequitas necesita comparar las etiquetas reales con las predichas,
         por lo que necesitamos cargar el modelo elegido como el mejor.
         """
         self.model = get_object_from_s3(historic=self.historic, query_date=self.query_date,
-        prefix=ModelSelector.prefix, training=False)
+                                        prefix=ModelSelector.prefix, training=False)
         print(f"*** Successfully loaded model {self.model} ***")
         # nota: aquí es cuando encuentro confuso el parámetro  training: los modelos no lo tienen
         # y por eso no lo pueden heredar de la clase
-
-
-
-
-    
