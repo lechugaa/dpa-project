@@ -68,13 +68,13 @@ class MrFairness:
 
         self.aequitas_df = pd.DataFrame({'score': self.predictions, 'label_value': self.labels,
                                          'facility_type': chosen_facilities})
-        print(f"\n*** Successfully constructed aequitas dataframe with columns: {self.aequitas_df.columns.values} ***")
+        print(f"\n>>> Successfully constructed aequitas dataframe with columns: {self.aequitas_df.columns.values} <<<")
 
 
 
 ## pruebas EC2:
-## from src.pipeline.bias_fairness import MrFairness
-# from datetime import datetime
-# date = datetime(2021, 4, 30)
-## fair = MrFairness(historic=False, query_date=date, training=True)
+from src.pipeline.bias_fairness import MrFairness
+from datetime import datetime
+date = datetime(2021, 4, 30)
+fair = MrFairness(historic=False, query_date=date, training=True)
 ## 
