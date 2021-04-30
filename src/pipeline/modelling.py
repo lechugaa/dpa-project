@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve
 
-from src.utils.general import get_dictionary_from_s3, get_file_path, load_from_pickle
+from src.utils.general import get_object_from_s3, get_file_path, load_from_pickle
 
 
 class Modelling:
@@ -34,7 +34,7 @@ class Modelling:
             self._save_models()
 
     def _get_data(self):
-        data_dict = get_dictionary_from_s3(historic=self.historic, query_date=self.query_date, training=True)
+        data_dict = get_object_from_s3(historic=self.historic, query_date=self.query_date, training=True)
         self.x_train = data_dict['X_train']
         self.y_train = data_dict['y_train']
         self.x_test = data_dict['X_test']
@@ -95,7 +95,7 @@ class ModelSelector:
         self.models = load_from_pickle(file_path)
 
     def _get_data(self):
-        data_dict = get_dictionary_from_s3(historic=self.historic, query_date=self.query_date, training=True)
+        data_dict = get_object_from_s3(historic=self.historic, query_date=self.query_date, training=True)
         self.x_train = data_dict['X_train']
         self.y_train = data_dict['y_train']
         self.x_test = data_dict['X_test']
