@@ -87,7 +87,7 @@ class MrFairness:
         notebook: uno para conteos absolutos y otro para los relativos. 
         """
         # Primero: conteos absolutos
-        columns = [col for col in self.all_metrics if col not in self.absolute_metrics]
+        columns = [col for col in self.all_metrics_df if col not in self.absolute_metrics]
         self.group_counts_df = self.all_metrics_df[columns]
 
         #Luego: conteos como porcentaje
