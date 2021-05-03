@@ -14,7 +14,7 @@ from src.utils.general import get_object_from_s3
 
 class MrFairness:
 
-    prefix = 'bias-fairness'
+    prefix = 'aequitas'
 
     def __init__(self, historic=False, query_date=None, training=True):
         self.historic = historic
@@ -61,8 +61,7 @@ class MrFairness:
         """
         Dado que ya se hizo el one hot encoding, esto es un ligero dolor.
         """
-        facility_types = [
-            e for e in self.features.columns if e.startswith('facility')]
+        facility_types = [e for e in self.features.columns if e.startswith('facility')]
         chosen_facilities = [0] * self.features.shape[0]
         for i in range(len(self.features)):
             for facility_type in facility_types:
@@ -81,10 +80,8 @@ class MrFairness:
         absolutas como relativas. Los resultados se guardan como dataframe.
         """
         group = Group()
-        self.all_metrics_df, self.attributes = group.get_crosstabs(
-            self.aequitas_df)
-        self.absolute_metrics = group.list_absolute_metrics(
-            self.all_metrics_df)
+        self.all_metrics_df, self.attributes = group.get_crosstabs(self.aequitas_df)
+        self.absolute_metrics = group.list_absolute_metrics(self.all_metrics_df)
         self._get_group_dataframes()
 
     def _get_group_dataframes(self):
@@ -93,8 +90,7 @@ class MrFairness:
         notebook: uno para conteos absolutos y otro para los relativos.
         """
         # Primero: conteos absolutos
-        columns = [
-            col for col in self.all_metrics_df if col not in self.absolute_metrics]
+        columns = [col for col in self.all_metrics_df if col not in self.absolute_metrics]
         self.group_counts_df = self.all_metrics_df[columns]
 
         # Luego: conteos como porcentaje
@@ -105,20 +101,23 @@ class MrFairness:
     def _compute_bias_metrics(self):
         """
         Método para calcular las métricas relevantes para la sección de sesgo, o Bias,
-        y guardarlas en un dataframe.
+        y guardarlas en dos dataframes. 'bias_df' es un subset de 'full_bias_df',
+        el cual contiene todas las columnas posibles. 
         """
         b = Bias()
         # 46 columnas
-        self.extended_bias_df = b.get_disparity_predefined_groups(self.all_metrics_df,
+        self.full_bias_df = b.get_disparity_predefined_groups(self.all_metrics_df,
                                                                   original_df=self.aequitas_df, ref_groups_dict={
                                                                       'facility_type': self.protected_group},
                                                                   alpha=self.alpha_bias)
 
-        self.bias_metrics = b.list_disparities(self.extended_bias_df)
+        self.bias_metrics = b.list_disparities(self.full_bias_df)
         important_columns = ['attribute_name', 'attribute_value'] + self.bias_metrics
-        self.bias_df = self.extended_bias_df[important_columns].round(2)
-        print("\nSuccessfully constructed Bias dataframes: 'extended_bias_df' and 'bias_df'")
+        self.bias_df = self.full_bias_df[important_columns].round(2)
+        print("\nSuccessfully constructed Bias dataframes: 'full_bias_df' and 'bias_df'")
 
+    def _compute_fairness_metrics(self):
+        pass
 
 
 """
