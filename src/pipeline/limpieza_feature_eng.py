@@ -2,9 +2,14 @@ import pickle
 import re
 import pandas as pd
 import datetime
+import os
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import OneHotEncoder
 
 from src.utils.general import get_pickle_from_s3_to_pandas, get_file_path
-from src.utils.general import load_from_pickle
+from src.utils.general import load_from_pickle, save_to_pickle
 
 
 class DataCleaner:
@@ -15,7 +20,7 @@ class DataCleaner:
     def __init__(self, historic=False, query_date=None):
         self.df = get_pickle_from_s3_to_pandas(historic, query_date)
         #Parche
-        # self.df = pd.DataFrame(pd.read_pickle('temp/historic-inspections-2021-02-22.pkl'))
+        #self.df = pd.DataFrame(pd.read_pickle('temp/historic-inspections-2021-02-22.pkl'))
         # Parche
         self.historic = historic
         self.query_date = query_date
@@ -39,8 +44,9 @@ class DataCleaner:
         self.df = self.df.astype({"zip": 'str'})
 
     def _clean_results(self):
-        self.df['results'].mask(self.df['results'] !=
-                                'Pass', other='Not Pass', inplace=True)
+        self.df['Pass'] = 'pass'
+        self.df['results'] = self.df['Pass'].where(self.df['results'].isin(['Pass', 'Pass w/ Conditions']), 'not_pass')
+        self.df.drop(columns = ['Pass'], inplace = True)
 
     def _standardize_column_strings(self, columns, excluded_punctuation=".,-*'¿?¡!()", gap_punct="\/"):
         for col in columns:
@@ -174,7 +180,7 @@ class DataCleaner:
         self.df.dropna(axis = 0, inplace = True)
         self._change_data_types()
         self._clean_results()
-        self._standardize_column_strings(['facility_type', 'risk', 'inspection_type', 'results'])
+        self._standardize_column_strings(['facility_type', 'risk', 'inspection_type'])
         self._drop_risk_all()
         self._clean_facility_type()
         self._clean_inspection_type()
@@ -192,7 +198,7 @@ class DataCleaner:
         print(f"Successfully saved temp file as pickle in: {local_path}")
 
     def get_clean_df(self):
-        self.clean_data()
+        #self.clean_data()
         return self.df
 
     def get_cleaning_metadata(self):
@@ -210,12 +216,13 @@ class DataEngineer:
     # static variables
     prefix = 'feature-engineering'
 
-    def __init__(self, historic=False, query_date=None):
+    def __init__(self, historic=False, query_date=None, training = True):
         self.historic = historic
         self.query_date = query_date
+        self.training = training
         self.df = self._get_df()
         # Parche
-        # self.df = pd.DataFrame(pickle.load(open('temp/historic-clean-2021-02-22.pkl', 'rb')))
+        # self.df = pd.DataFrame(pickle.load(open('temp/clean-historic-inspections-2021-02-22.pkl', 'rb')))
         # end parche
         self.original_rows, self.original_cols = self.df.shape
         self.prefix = DataEngineer.prefix
@@ -230,126 +237,251 @@ class DataEngineer:
         df.violations = df.violations.astype('str')
         return df
 
-    def _extract_violation_num(self, s) -> int:
-        """
-        Extrae el número de violación en un string.
-        :param s: string
-                      texto del registro
-        :return: int
-        """
-        pattern = '\d+\.'  # numeros + punto # cambio para coincidir con formato de violations
-        result = re.findall(pattern, s)
-        if not result:  # no hay violaciones
-            return 0
-        else:  # regresa número de violación
-            return int(result[0].replace('.', '')) # cambio
-
-    def _get_violations_incurred(self, s) -> list:
-        """
-        Extra el total de violaciones en un registro.
-        :param s: string
-                      Una celda de la columna 'violations'
-        :return violation_nums: list
-                 lista con todas las infracciones, por ejemplo, [13,22,55]
-        """
-        all_violations = s.split(' | ')
-        violation_nums = []
-        for violation in all_violations:
-            violation_nums.append(self._extract_violation_num(violation))
-
-        return violation_nums
-
-    def _add_extra_columns(self, df):
-        """Añade columnas para one hot encoding."""
-        for i in range(1, 80):
-            column = 'violation_' + str(i)
-            df[column] = 0
-
-        return df
-
-    def _add_one_hot_encoding(self, df):
-        """
-         Realiza todo el pipeline.
-
-        :param df: pandas dataframe
-        :return df: dataframe con el one hot encoding
-         """
-
-        # crear columnas
-        df = self._add_extra_columns(df)
-        df['lista_violaciones'] = df.violations.apply(self._get_violations_incurred)
-
-        # luego llenamos df
-        for i in range(len(df)):
-            violaciones = df['lista_violaciones'][i]
-            violaciones = [e for e in violaciones if e != '0']
-            for violacion in violaciones:
-                column_index = violacion + 12
-                df.iloc[i, column_index] = 1
-
-        # tiramos columnas  temporales y las que están todas en ceros
-        df.drop(columns=['lista_violaciones'], inplace=True)
-    
-        return df
-
-    def _drop_zero_cols(self, df):
-        all_columns = df.columns.values
-        other = [e for e in all_columns if not  e.startswith('violation_')]
-        all_columns =  [e for e in all_columns if e.startswith('violation_')]
-        valid_cols = []
-        for column in all_columns:
-            if df[column].sum() != 0:
-                valid_cols.append(column)
-        
-        other += valid_cols
-        return df[other]
-
     # Código MH
+    
+    def _split_data(self):
+        y = self.df['results'] 
+        X = self.df.drop(columns = 'results')
+
+        if self.training:
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, shuffle = False)
+            
+        else:
+            self.X_consec = X
+            self.y_consec = y
+         
     def _get_date_features(self):
-        self.df['dow'] = self.df['inspection_date'].dt.day_name()
-        self.df['dow'] = self.df['dow'].str.lower()
-        self.df['month'] = self.df['inspection_date'].dt.month
-        self.df = self.df.astype({"month": 'str'})
+        
+        if self.training:
+        
+            self.X_train['dow'] = self.X_train['inspection_date'].dt.day_name().str.lower()
+            self.X_train['month'] = self.X_train['inspection_date'].dt.month
+            self.X_train = self.X_train.astype({"month": 'str'})
+            
+            self.X_test['dow'] = self.X_test['inspection_date'].dt.day_name().str.lower()
+            self.X_test['month'] = self.X_test['inspection_date'].dt.month
+            self.X_test = self.X_test.astype({"month": 'str'})
+        
+        else:
+            
+            self.X_consec['dow'] = self.X_consec['inspection_date'].dt.day_name().str.lower()
+            self.X_consec['month'] = self.X_consec['inspection_date'].dt.month
+            self.X_consec = self.X_consec.astype({"month": 'str'})
+            
+        
+    def _step_other(self, df_train, df_test, cols, thresh = 0.002):
+    
+        if self.training:
+    
+            others_dict = {}
+            df_train_copy = df_train.copy()
+    
+            df_test_copy = df_test.copy()
+    
+            for col in cols:
+                # Obtener los niveles que pasan el thresh con train
+                lvls = df_train[col].value_counts(normalize=True)[df_train[col].value_counts(normalize=True) > thresh].index.array
+                # Almacenar los niveles en un dict
+                others_dict[col] = lvls
+                # Hacer el cambio a 'other' en el df_train
+                df_train_copy[col] = df_train[col].mask(~df_train[col].isin(lvls), 'other')
+                # Hacer el  cambio a 'other'en el df_test
+                df_test_copy[col] = df_test[col].mask(~df_test[col].isin(lvls), 'other')
+            
+            return df_train_copy, df_test_copy, others_dict
+
+        else:
+            
+            others_dict = self.other_dict
+            df_test_copy = df_test.copy()
+        
+            for col in cols:
+                lvls = others_dict[col]
+                df_test_copy[col] = df_test[col].mask(~df_test[col].isin(lvls), 'other')
+        
+            return df_test_copy    
+    
         
     def _change_vars_other(self):
-        self.df['inspection_type'] =  self.df['inspection_type'].mask(self.df['inspection_type'].map(self.df['inspection_type'].value_counts(normalize=True)) < 0.0002, 'other')
-        self.df['inspection_type'] =  self.df['facility_type'].mask(self.df['facility_type'].map(self.df['facility_type'].value_counts(normalize=True)) < 0.0002, 'other')
-        self.df['zip'] =  self.df['zip'].mask(self.df['zip'].map(self.df['zip'].value_counts(normalize=True)) < 0.002, 'other')
+        
+        if self.training:
+            self.X_train, self.X_test, self.other_dict = self._step_other(self.X_train, self.X_test, ['inspection_type', 'facility_type','zip'])
+            
+        else:
+            self.X_consec = self._step_other(None, self.X_consec, ['inspection_type', 'facility_type','zip'], self.other_dict)
 
-    def _change_labels_y(self):
-        self.df['results'] = self.df['results'].apply(lambda x: '1' if x in ['pass'] else '0' )
+    def _scale_vars(self):
+        
+        if self.training:
+            scaler = MinMaxScaler()
+            self.X_train[['longitude','latitude']] = scaler.fit_transform(self.X_train[['longitude','latitude']])
+            self.X_test[['longitude','latitude']] = scaler.transform(self.X_test[['longitude','latitude']])
+            self.trained_scaler = scaler
+            
+        else:
+            scaler = self.trained_scaler
+            self.X_consec[['longitude','latitude']] = scaler.transform(self.X_consec[['longitude','latitude']])
         
     def _encode_data_onehot(self):
-        self.df = pd.get_dummies(self.df, columns = ['facility_type', 'inspection_type','risk','zip', 'dow','month'])
+        
+        if self.training:
+            
+            inspection_types = ['canvas', 'complaint', 'consultation',
+                    'license','suspected_food_poisoning', 'tag_removal', 'other']
+
+            facility_types =['assisted_living', 'bakery', 'bar', 'catering',
+                             'childrens_service_facility', 'daycare', 'grocery_store',
+                             'hospital', 'liquor', 'na', 'other_food', 'restaurant',
+                             'school', 'wholesale', 'other']
+
+            zips = ['60601', '60602', '60603', '60604', '60605', '60606', '60607',
+                    '60608', '60609', '60610', '60611', '60612', '60613', '60614',
+                    '60615', '60616', '60617', '60618', '60619', '60620', '60621',
+                    '60622', '60623', '60624', '60625', '60626', '60628', '60629',
+                    '60630', '60631', '60632', '60634', '60636', '60637', '60638',
+                    '60639', '60640', '60641', '60642', '60643', '60644', '60645',
+                    '60646', '60647', '60649', '60651', '60652', '60653', '60654',
+                    '60655', '60656', '60657', '60659', '60660', '60661', '60666',
+                    '60707', 'other']
+
+            risks = ['risk_1_high', 'risk_2_medium', 'risk_3_low']
+
+            dows = ['monday', 'tuesday','wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+            months =['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+            
+            encoder = OneHotEncoder(sparse = False,
+                        categories= [inspection_types, facility_types,
+                                     zips, risks, dows, months],
+                        handle_unknown ='ignore')
+
+            onehot_train = pd.DataFrame(encoder.fit_transform(self.X_train[['inspection_type', 'facility_type', 'zip', 'risk','dow','month']]))
+            onehot_train.columns = encoder.get_feature_names(['inspection_type', 'facility_type', 'zip', 'risk','dow','month'])
+
+            self.X_train.drop(columns = ['inspection_type', 'facility_type', 'zip', 'risk','dow','month'], inplace= True)
+            self.X_train = pd.concat([self.X_train, onehot_train], axis = 1)
+
+            onehot_test = pd.DataFrame(encoder.transform(self.X_test[['inspection_type', 'facility_type', 'zip', 'risk','dow','month']]))
+            onehot_test.columns = encoder.get_feature_names(['inspection_type', 'facility_type', 'zip', 'risk','dow','month'])
+
+            self.X_test.drop(columns = ['inspection_type', 'facility_type', 'zip', 'risk','dow','month'], inplace= True)
+            
+            self.X_test = pd.concat([self.X_test.reset_index(drop = True), onehot_test], axis = 1)
+        
+            self.trained_encoder = encoder
+            
+        else:
+            
+            encoder = self.trained_encoder
+            
+            onehot_test = pd.DataFrame(encoder.transform(self.X_consec[['inspection_type', 'facility_type', 'zip', 'risk','dow','month']]))
+            onehot_test.columns = encoder.get_feature_names(['inspection_type', 'facility_type', 'zip', 'risk','dow','month'])
+            
+            self.X_consec = pd.concat([self.X_consec, onehot_test], axis = 1)
+
+            self.X_consec.drop(columns = ['inspection_type', 'facility_type', 'zip', 'risk','dow','month'], inplace= True)
+
 
     def _drop_useless_cols(self):
-        self.df = self.df.drop(['inspection_id','inspection_date','violations'], axis=1)
+        
+        if self.training:
+            self.X_train.drop(columns = ['inspection_id', 'inspection_date', 'violations'], inplace = True)
+            self.X_test.drop(columns = ['inspection_id', 'inspection_date', 'violations'], inplace = True)
+        else:
+            self.X_consec.drop(columns = ['inspection_id', 'inspection_date', 'violations'], inplace = True)
 
+    def _change_labels_y(self):
+        
+        if self.training:
+            self.y_train = self.y_train.apply(lambda x: 1 if x in ['pass'] else 0 ) 
+            self.y_test = self.y_test.reset_index(drop = True).apply(lambda x: 1 if x in ['pass'] else 0 )
+            
+        else:
+            self.y_consec = self.y_consec.apply(lambda x: 1 if x in ['pass'] else 0 ) 
+        
     def _save_df(self):
-        local_path = get_file_path(self.historic, self.query_date, self.prefix)
-        pickle.dump(self.df, open(local_path, 'wb'))
-        print(f"Succesfully saved temp file as pickle in: {local_path}")
 
+        if self.training:
+        
+            compact_data = {'X_train': self.X_train, 'X_test': self.X_test, 'y_train': self.y_train, 'y_test': self.y_test}
+            
+            local_path = get_file_path(historic=self.historic, query_date=self.query_date, prefix=self.prefix, training=self.training)
+            pickle.dump(compact_data, open(local_path, 'wb'))
+            print(f"Succesfully saved temp file as pickle in: {local_path}")
+            
+        else:
+            
+            compact_data = {'X_consec': self.X_consec, 'y_consec': self.y_consec}
+            local_path = get_file_path(historic=self.historic, query_date=self.query_date, prefix=self.prefix, training=self.training)
+            pickle.dump(compact_data, open(local_path, 'wb'))
+            print(f"Succesfully saved temp file as pickle in: {local_path}")
+            
+            
+    def _save_transformers(self):
+        
+        if self.training:
+            
+            root_path = os.getcwd()
+        
+            path = f"{root_path}/temp/other_dict.pkl"
+            save_to_pickle(self.other_dict, path)
+        
+            path = f"{root_path}/temp/trained_scaler.pkl"
+            save_to_pickle(self.trained_scaler, path)
+        
+            path = f"{root_path}/temp/trained_encoder.pkl"
+            save_to_pickle(self.trained_encoder, path)
+                
+            print(f"Succesfully saved transformers as pickles in: {root_path}/temp/") 
+            
+        else:
+            
+            print("Transformers are not saved when Training = False")
+            
+        
     # Luigi's interface methods
-    def generate_features(self, save=False):
+    def generate_features(self, save_df=False, save_transformers = True):
         """
         Genera el self.df a partir de los datos post-limpieza (los toma de S3)
         Este self.df ya debe contener todos los features que se quieren agregar
         para entrenar y predecir
         :param save: booleano que determina si se guarda localmente o no el df
         """
-        # self.df = self._add_one_hot_encoding(self.df) #Tarda mucho, evaluar si es necesario
-        # self.df = self._drop_zero_cols(self.df) #Tarda mucho, evaluar si es necesario
-        # Agrega código MH
+        
+        if self.training is False:
+            root_path = os.getcwd()
+            path = f"{root_path}/temp/other_dict.pkl"
+            self.other_dict = load_from_pickle(path)
+        
+            path = f"{root_path}/temp/trained_scaler.pkl"
+            self.trained_scaler = load_from_pickle(path)
+        
+            path = f"{root_path}/temp/trained_encoder.pkl"
+            self.trained_encoder = load_from_pickle(path)
+            
+        self._split_data()
         self._get_date_features()
         self._change_vars_other()
-        self._change_labels_y()
-        self._drop_useless_cols()
+        self._scale_vars()
         self._encode_data_onehot()
-        #
-        self.final_rows, self.final_cols = self.df.shape
-        if save:
+        self._drop_useless_cols()
+        self._change_labels_y()
+
+        if self.training:
+            self.final_rows = self.X_train.shape[0] + self.X_test.shape[0]
+            
+            self.final_cols = self.X_train.shape[1] + 1
+                
+        else:
+            self.final_rows, self.final_cols = self.X_consec.shape #Ojo con esto
+            self.final_cols += 1
+            
+        if save_df:
             self._save_df()
+            
+        if save_transformers:
+            self._save_transformers()
+            
 
     def get_featured_df(self):
         """
@@ -357,8 +489,46 @@ class DataEngineer:
         generate_features
         :return: data frame con los features añadidos
         """
-        self.generate_features()
-        return self.df
+        #self.generate_features()
+        
+        if self.training:
+            return self.X_train, self.X_test, self.y_train, self.y_test
+    
+        else:
+            return self.X_consec, self.y_consec
+            
+    
+    def get_trained_transformers(self):
+        """
+        Obtener los transformers entrenados con X_train
+        Para poder aplicarse a las ingestas consecutivas
+        Obtiene:
+            el diccionario de niveles para step_other
+            el scaler entrenado
+            el enconder entrenado
+        """
+        if self.training:
+            print("Fetching recently trained transformers...")
+        
+            #self.generate_features()
+            
+        else:
+            print("Loading locally saved transformers...")
+                
+            root_path = os.getcwd()
+        
+            path = f"{root_path}/temp/other_dict.pkl"
+            self.other_dict = load_from_pickle(path)
+        
+            path = f"{root_path}/temp/trained_scaler.pkl"
+            self.trained_scaler = load_from_pickle(path)
+        
+            path = f"{root_path}/temp/trained_encoder.pkl"
+            self.trained_encoder = load_from_pickle(path)
+            
+        return self.other_dict, self.trained_scaler, self.trained_encoder
+                
+    
 
     def get_feature_engineering_metadata(self):
         """
@@ -370,4 +540,4 @@ class DataEngineer:
             self.query_date = datetime.datetime.now()
 
         return [(self.original_rows, self.original_cols, self.final_rows,
-                 self.final_cols, self.historic, self.query_date)]
+                 self.final_cols, self.historic, self.query_date, self.training)] #Toño

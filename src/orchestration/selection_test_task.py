@@ -2,16 +2,18 @@ import datetime
 import luigi
 from luigi.contrib.postgres import CopyToTable
 from src.utils.general import get_db_credentials
-from src.orchestration.feature_engineering_task import FeatureEngineeringTask
-from src.tests.feature_eng_tests import FeatureTester
+from src.orchestration.selection_task import SelectionTask
+from src.tests.selection_tests import ModelSelectionTester
 
 
-class FeatureEngTestTask(CopyToTable):
+class SelectionTestTask(CopyToTable):
 
     # parameters
     historic = luigi.BoolParameter(default=False)
-    training = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
+    desired_models = luigi.IntParameter(default=2)
+    fpr_restriction = luigi.FloatParameter(default=1.00)
+    desired_classes = luigi.ListParameter(default=[0, 1])
 
     # recuperando credenciales de base de datos
     credentials = get_db_credentials('conf/local/credentials.yaml')
@@ -31,16 +33,16 @@ class FeatureEngTestTask(CopyToTable):
                ("test_name", "VARCHAR(250)")]
 
     def requires(self):
-        return FeatureEngineeringTask(historic=self.historic, query_date=self.query_date, training=self.training)
+        return SelectionTask(historic=self.historic, query_date=self.query_date, desired_models=self.desired_models, fpr_restriction=self.fpr_restriction)
 
     def rows(self):
-        tester = FeatureTester(historic=self.historic, query_date=self.query_date, training=self.training)
+        tester = ModelSelectionTester(historic=self.historic, query_date=self.query_date, desired_classes=self.desired_classes)
         results = tester()
         if len(results.failures) > 0:
             for failure in results.failures:
                 print(failure)
-            raise Exception("Feature engineering tests failed...")
+            raise Exception("Selection tests failed...")
 
-        rows = [(str(datetime.date.today()), "feature engineering test")]
+        rows = [(str(datetime.date.today()), "selection-test")]
         for row in rows:
             yield row

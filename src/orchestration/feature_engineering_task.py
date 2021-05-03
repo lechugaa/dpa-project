@@ -13,6 +13,7 @@ class FeatureEngineeringTask(luigi.Task):
 
     # class attributes
     historic = luigi.BoolParameter(default=False)
+    training = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
 
     def requires(self):
@@ -21,12 +22,12 @@ class FeatureEngineeringTask(luigi.Task):
     def run(self):
 
         # obtaining paths
-        file_path = get_file_path(historic=self.historic, query_date=self.query_date, prefix=DataEngineer.prefix)
-        upload_path = get_upload_path(historic=self.historic, query_date=self.query_date, prefix=DataEngineer.prefix)
+        file_path = get_file_path(historic=self.historic, query_date=self.query_date, prefix=DataEngineer.prefix, training=self.training)
+        upload_path = get_upload_path(historic=self.historic, query_date=self.query_date, prefix=DataEngineer.prefix, training=self.training)
 
         # execute process
-        fe = DataEngineer(self.historic, self.query_date)
-        fe.generate_features(save=True)
+        fe = DataEngineer(historic=self.historic, query_date=self.query_date, training=self.training)
+        fe.generate_features(save_df=True, save_transformers=self.training)
 
         # uploading file
         s3_resource = get_s3_resource()
@@ -39,7 +40,7 @@ class FeatureEngineeringTask(luigi.Task):
             aws_secret_access_key=s3_credentials['aws_secret_access_key']
         )
 
-        upload_path = get_upload_path(historic=self.historic, query_date=self.query_date, prefix=DataEngineer.prefix)
+        upload_path = get_upload_path(historic=self.historic, query_date=self.query_date, prefix=DataEngineer.prefix, training=self.training)
         output_path = f"s3://{bucket_name}/{upload_path}"
 
         return luigi.contrib.s3.S3Target(path=output_path, client=client)

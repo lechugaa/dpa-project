@@ -72,7 +72,7 @@ def get_api_token(credentials_file):
     return api_token
 
 
-def get_file_path(historic=False, query_date=None, prefix="ingestion"):
+def get_file_path(historic=False, query_date=None, prefix="ingestion", training=False):
     """
     Regresa un string con la ruta necesaria para almacenamiento local. El parámetro 'historic'
     determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
@@ -84,6 +84,7 @@ def get_file_path(historic=False, query_date=None, prefix="ingestion"):
     :param historic: boolean
     :param query_date: fecha (datetime) relacionada a la obtención de los datos
     :param prefix: prefijo de archivo local en donde se almacenará
+    :param training: añade al final de la ruta la palabra training para diferenciarlo
     :return: string
     """
     if query_date is None:
@@ -94,12 +95,12 @@ def get_file_path(historic=False, query_date=None, prefix="ingestion"):
     root_path = os.getcwd()
 
     if historic:
-        return f"{root_path}/temp/{prefix}-historic-inspections-{date_string}.pkl"
+        return f"{root_path}/temp/{prefix}-historic-inspections-{date_string}{'-training' if training else ''}.pkl"
 
-    return f"{root_path}/temp/{prefix}-consecutive-inspections-{date_string}.pkl"
+    return f"{root_path}/temp/{prefix}-consecutive-inspections-{date_string}{'-training' if training else ''}.pkl"
 
 
-def get_upload_path(historic=False, query_date=None, prefix="ingestion"):
+def get_upload_path(historic=False, query_date=None, prefix="ingestion", training=False):
     """
     Regresa un string con la ruta necesaria para almacenamiento en el bucket de S3. El parámetro 'historic'
     determina si se regresa la ruta de ingesta histórica o de ingesta continua. En ambos casos la fecha
@@ -111,6 +112,7 @@ def get_upload_path(historic=False, query_date=None, prefix="ingestion"):
     :param historic: boolean
     :param query_date: fecha (datetime) relacionada a la obtención de los datos
     :param prefix: comienzo de la ruta a obtener en S3
+    :param training: añade al final de la ruta la palabra training para diferenciarlo
     :return: string
     """
     if query_date is None:
@@ -119,9 +121,9 @@ def get_upload_path(historic=False, query_date=None, prefix="ingestion"):
         date_string = query_date.strftime("%Y-%m-%d")
 
     if historic:
-        return f"{prefix}/initial/historic-inspections-{date_string}.pkl"
+        return f"{prefix}/initial/historic-inspections-{date_string}{'-training' if training else ''}.pkl"
 
-    return f"{prefix}/consecutive/consecutive-inspections-{date_string}.pkl"
+    return f"{prefix}/consecutive/consecutive-inspections-{date_string}{'-training' if training else ''}.pkl"
 
 
 def load_from_pickle(path):
@@ -167,3 +169,9 @@ def get_pickle_from_s3_to_pandas(historic=False, query_date=None):
     print(f"Successfully loaded Dataframe from {pickle_path}")
 
     return df
+
+def get_object_from_s3(historic=False, query_date=None, prefix='feature-engineering', training=True):
+    client = get_s3_resource()
+    pickle_path = get_upload_path(historic=historic, query_date=query_date, prefix=prefix, training=training)
+    obj = client.Object(bucket_name, pickle_path).get()['Body'].read()
+    return pickle.loads(obj)

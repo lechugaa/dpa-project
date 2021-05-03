@@ -2,16 +2,16 @@ import datetime
 import luigi
 from luigi.contrib.postgres import CopyToTable
 from src.utils.general import get_db_credentials
-from src.orchestration.feature_engineering_task import FeatureEngineeringTask
-from src.tests.feature_eng_tests import FeatureTester
+from src.orchestration.training_task import TrainingTask
+from src.tests.training_tests import TrainingTester
 
 
-class FeatureEngTestTask(CopyToTable):
+class TrainingTestTask(CopyToTable):
 
     # parameters
     historic = luigi.BoolParameter(default=False)
-    training = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
+    desired_models = luigi.IntParameter(default=2)
 
     # recuperando credenciales de base de datos
     credentials = get_db_credentials('conf/local/credentials.yaml')
@@ -31,16 +31,16 @@ class FeatureEngTestTask(CopyToTable):
                ("test_name", "VARCHAR(250)")]
 
     def requires(self):
-        return FeatureEngineeringTask(historic=self.historic, query_date=self.query_date, training=self.training)
+        return TrainingTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
-        tester = FeatureTester(historic=self.historic, query_date=self.query_date, training=self.training)
+        tester = TrainingTester(historic=self.historic, query_date=self.query_date, desired_models=self.desired_models)
         results = tester()
         if len(results.failures) > 0:
             for failure in results.failures:
                 print(failure)
-            raise Exception("Feature engineering tests failed...")
+            raise Exception("Training tests failed...")
 
-        rows = [(str(datetime.date.today()), "feature engineering test")]
+        rows = [(str(datetime.date.today()), "training test")]
         for row in rows:
             yield row
