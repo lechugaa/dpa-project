@@ -23,6 +23,7 @@ class MrFairness:
         self.prefix = MrFairness.prefix
         self.alpha_bias = 0.05  # se usa en la sección de bias
         self.protected_group = 'facility_type_restaurant'
+        self.attribute_columns = ['attribute_name', 'attribute_value']
         self._load_data()
         self._load_model()
         self.predictions = self.model.predict(self.features)  # predicciones
@@ -82,9 +83,9 @@ class MrFairness:
         group = Group()
         self.all_metrics_df, self.attributes = group.get_crosstabs(self.aequitas_df)
         self.absolute_metrics = group.list_absolute_metrics(self.all_metrics_df)
-        self._get_group_dataframes()
+        self._construct_group_dataframes()
 
-    def _get_group_dataframes(self):
+    def _construct_group_dataframes(self):
         """
         Función para construir los dos dataframes que muestra liliana en su
         notebook: uno para conteos absolutos y otro para los relativos.
@@ -94,30 +95,58 @@ class MrFairness:
         self.group_counts_df = self.all_metrics_df[columns]
 
         # Luego: conteos como porcentaje
-        columns = ['attribute_name', 'attribute_value'] + self.absolute_metrics
+        columns = self.attribute_columns + self.absolute_metrics
         self.group_pct_df = self.all_metrics_df[columns].round(2)
         print("\nSuccessfully constructed Group dataframes: 'group_counts_df' and 'group_pct_df'")
 
     def _compute_bias_metrics(self):
         """
         Método para calcular las métricas relevantes para la sección de sesgo, o Bias,
-        y guardarlas en dos dataframes. 'bias_df' es un subset de 'full_bias_df',
+        y guardarlas en dos dataframes. 'bias_df' es un subset de 'extended_bias_df',
         el cual contiene todas las columnas posibles. 
         """
-        b = Bias()
+        self.bias = Bias()
         # 46 columnas
-        self.full_bias_df = b.get_disparity_predefined_groups(self.all_metrics_df,
+        self.extended_bias_df = self.bias.get_disparity_predefined_groups(self.all_metrics_df,
                                                                   original_df=self.aequitas_df, ref_groups_dict={
                                                                       'facility_type': self.protected_group},
                                                                   alpha=self.alpha_bias)
 
-        self.bias_metrics = b.list_disparities(self.full_bias_df)
-        important_columns = ['attribute_name', 'attribute_value'] + self.bias_metrics
-        self.bias_df = self.full_bias_df[important_columns].round(2)
-        print("\nSuccessfully constructed Bias dataframes: 'full_bias_df' and 'bias_df'")
+        self.bias_metrics = self.bias.list_disparities(self.extended_bias_df)
+        important_columns = self.attribute_columns + self.bias_metrics
+        self.bias_df = self.extended_bias_df[important_columns].round(2)
+        print("\nSuccessfully constructed Bias dataframes: 'extended_bias_df' and 'bias_df'")
 
     def _compute_fairness_metrics(self):
-        pass
+        """
+        Método para calcular y almacenar las métricas relevantes de fairness. 
+        """
+        self.fairness = Fairness()
+        self.fairness_df = f.get_group_value_fairness(self.extended_bias_df)
+        self.parity_determinations = f.list_parities(self.fairness_df)
+        self._construct_fairness_dataframes()
+    
+    def _construct_fairness_dataframes(self):
+        """
+        En esta función se crean y se almacenan los tres tipos de fairness analyses
+        posibles.
+        """
+        # Primero: Equidad por grupo
+        cols = self.attribute_columns + self.absolute_metrics + self.bias.list_disparities(
+                 self.fairness_df) + self.parity_determinations
+        self.fairness_by_group = self.fairness_df[cols].round(2)
+
+        # Segundo: Equidad a nivel de atributo
+        self.fairness_by_atts = self.fairness.get_group_attribute_fairness(
+            self.fairness_df)
+
+        # Tercero: overall fairness 
+        self.overall_fairness = self.fairness.get_overall_fairness(self.fairness_df)
+
+        print("\nSuccessfully constructed fairness dataframes: 'fairness_by_group', 'fairness_by_atts' and 'overall_fairness'")
+
+
+
 
 
 """
