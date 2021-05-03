@@ -142,7 +142,7 @@ class MrFairness:
         # Tercero: overall fairness 
         self.overall_fairness = self.fairness.get_overall_fairness(self.fairness_df)
 
-        print("\nSuccessfully constructed fairness dataframes: 'fairness_by_group', 'fairness_by_atts' and 'overall_fairness'")
+        print("\nSuccessfully constructed Fairness dataframes: 'fairness_by_group', 'fairness_by_atts' and 'overall_fairness'")
 
     def _execute_aequitas_pipeline(self):
         self._construct_aequitas_frame()
