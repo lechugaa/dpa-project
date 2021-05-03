@@ -25,6 +25,7 @@ class MrFairness:
         self._load_model()
         self.predictions = self.model.predict(self.features)  # predicciones
         self._construct_aequitas_frame()
+        self._compute_group_metrics()
 
     def _load_data(self):
         """
