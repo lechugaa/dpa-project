@@ -70,10 +70,36 @@ class MrFairness:
         print(f"\n>>> Successfully constructed aequitas dataframe with columns: {self.aequitas_df.columns.values} <<<")
 
 
+    def _compute_group_metrics(self):
+        """
+        Método para calcular y guardar las métricas iniciales de grupo, tanto 
+        absolutas como relativas.
+        """
+        group = Group()
+        self.all_metrics_df, self.attributes = group.get_crosstabs(self.aequitas_df)
+        self.absolute_metrics = group.list_absolute_metrics(self.all_metrics_df)
+        self._get_group_dataframes()
+    
+    def _get_group_dataframes(self):
+        """
+        Función para construir los dos dataframes que muestra liliana en su 
+        notebook: uno para conteos absolutos y otro para los relativos. 
+        """
+        # Primero: conteos absolutos
+        columns = [col for col in self.all_metrics if col not in self.absolute_metrics]
+        self.group_counts_df = self.all_metrics_df[columns]
 
+        #Luego: conteos como porcentaje
+        columns = ['attribute_name', 'attribute_value'] + self.absolute_metrics
+        self.group_pct_df = self.all_metrics_df[columns].round(2)
+        print("\nSuccessfully constructed Group DataFrames.")
+
+
+"""
 ## pruebas EC2:
 from src.pipeline.bias_fairness import MrFairness
 from datetime import datetime
 date = datetime(2021, 4, 30)
 fair = MrFairness(historic=False, query_date=date, training=True)
 ## 
+"""
