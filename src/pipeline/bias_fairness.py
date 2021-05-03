@@ -11,6 +11,8 @@ from src.pipeline.modelling import ModelSelector
 from src.utils.general import get_file_path, load_from_pickle, save_to_pickle, get_upload_path
 from src.utils.general import get_object_from_s3
 
+ATTRIBUTES_COLS = ['attribute_name', 'attribute_value']
+
 
 class MrFairness:
 
@@ -23,13 +25,10 @@ class MrFairness:
         self.prefix = MrFairness.prefix
         self.alpha_bias = 0.05  # se usa en la sección de bias
         self.protected_group = 'facility_type_restaurant'
-        self.attribute_columns = ['attribute_name', 'attribute_value']
         self._load_data()
         self._load_model()
         self.predictions = self.model.predict(self.features)  # predicciones
-        self._construct_aequitas_frame()
-        self._compute_group_metrics()
-        self._compute_bias_metrics()
+        self._execute_aequitas_pipeline()
 
     def _load_data(self):
         """
@@ -95,7 +94,7 @@ class MrFairness:
         self.group_counts_df = self.all_metrics_df[columns]
 
         # Luego: conteos como porcentaje
-        columns = self.attribute_columns + self.absolute_metrics
+        columns = ATTRIBUTES_COLS + self.absolute_metrics
         self.group_pct_df = self.all_metrics_df[columns].round(2)
         print("\nSuccessfully constructed Group dataframes: 'group_counts_df' and 'group_pct_df'")
 
@@ -113,7 +112,7 @@ class MrFairness:
                                                                   alpha=self.alpha_bias)
 
         self.bias_metrics = self.bias.list_disparities(self.extended_bias_df)
-        important_columns = self.attribute_columns + self.bias_metrics
+        important_columns = ATTRIBUTES_COLS + self.bias_metrics
         self.bias_df = self.extended_bias_df[important_columns].round(2)
         print("\nSuccessfully constructed Bias dataframes: 'extended_bias_df' and 'bias_df'")
 
@@ -122,8 +121,8 @@ class MrFairness:
         Método para calcular y almacenar las métricas relevantes de fairness. 
         """
         self.fairness = Fairness()
-        self.fairness_df = f.get_group_value_fairness(self.extended_bias_df)
-        self.parity_determinations = f.list_parities(self.fairness_df)
+        self.fairness_df = self.fairness.get_group_value_fairness(self.extended_bias_df)
+        self.parity_determinations = self.fairness.list_parities(self.fairness_df)
         self._construct_fairness_dataframes()
     
     def _construct_fairness_dataframes(self):
@@ -132,7 +131,7 @@ class MrFairness:
         posibles.
         """
         # Primero: Equidad por grupo
-        cols = self.attribute_columns + self.absolute_metrics + self.bias.list_disparities(
+        cols = ATTRIBUTES_COLS + self.absolute_metrics + self.bias.list_disparities(
                  self.fairness_df) + self.parity_determinations
         self.fairness_by_group = self.fairness_df[cols].round(2)
 
@@ -145,6 +144,11 @@ class MrFairness:
 
         print("\nSuccessfully constructed fairness dataframes: 'fairness_by_group', 'fairness_by_atts' and 'overall_fairness'")
 
+    def _execute_aequitas_pipeline(self):
+        self._construct_aequitas_frame()
+        self._compute_group_metrics()
+        self._compute_bias_metrics()
+        self._compute_fairness_metrics()
 
 
 
