@@ -11,6 +11,7 @@ class AequitasTestTask(CopyToTable):
     # parameters
     historic = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
+    training = luigi.BoolParameter(default=True)
     # desired_models = luigi.IntParameter(default=2)
     # fpr_restriction = luigi.FloatParameter(default=1.00)
     # desired_classes = luigi.ListParameter(default=[0, 1])
@@ -36,7 +37,7 @@ class AequitasTestTask(CopyToTable):
         return AequitasTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
-        tester = AequitasTester(historic=self.historic, query_date=self.query_date)
+        tester = AequitasTester(historic=self.historic, query_date=self.query_date, training=self.training)
                  # agregar más atributos luego -> o pruebas del restaurant facility o algo 
         results = tester()
         if len(results.failures) > 0:
