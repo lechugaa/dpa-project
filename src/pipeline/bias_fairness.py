@@ -165,7 +165,7 @@ class MrFairness:
     def _save_data(self):
         file_path = get_file_path(historic=self.historic, query_date=self.query_date,
                                   prefix=MrFairness.prefix, training=self.training)
-        pickle.dump(self, open(file_path, 'wb'))
+        pickle.dump(self, open(file_path, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
         print(f"Successfully saved MrFairness object in {file_path}")
 
 
