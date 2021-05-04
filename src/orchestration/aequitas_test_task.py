@@ -12,9 +12,6 @@ class AequitasTestTask(CopyToTable):
     historic = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
     training = luigi.BoolParameter(default=True)
-    # desired_models = luigi.IntParameter(default=2)
-    # fpr_restriction = luigi.FloatParameter(default=1.00)
-    # desired_classes = luigi.ListParameter(default=[0, 1])
 
     # recuperando credenciales de base de datos
     credentials = get_db_credentials('conf/local/credentials.yaml')

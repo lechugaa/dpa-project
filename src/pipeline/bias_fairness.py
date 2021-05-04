@@ -178,6 +178,16 @@ class MrFairness:
         pickle.dump(data, open(file_path, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
         print(f"Successfully saved data as a dictionary of dataframes in {file_path}")
 
+    def get_metadata(self):
+        group_entities = round(self.group_counts_df['total_entities'].unique()[0], 2)
+        mean_positive_rate = round(self.group_pct_df['tpr'].mean(), 2)
+        mean_ppr_disparity = round(self.bias_df['ppr_disparity'].mean(), 2)
+        unsupervised_fairness = self.overall_fairness['Unsupervised Fairness']
+        supervised_fairness = self.overall_fairness['Supervised Fairness']
+        overall_fairness = self.overall_fairness['Overall Fairness']
+        return [(group_entities, mean_positive_rate, mean_ppr_disparity, unsupervised_fairness,
+                 supervised_fairness, overall_fairness)]
+
 
 """
 ## pruebas EC2:
@@ -186,4 +196,8 @@ from datetime import datetime
 date = datetime(2021, 4, 30)
 fair = MrFairness(historic=False, query_date=date, training=True)
 ##
+
+
+
+
 """
