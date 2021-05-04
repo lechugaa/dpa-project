@@ -26,7 +26,8 @@ class AequitasTask(luigi.Task):
 
         # execute process
         fair = MrFairness(historic=self.historic, query_date=self.query_date,
-                          training=self.training, save=True)
+                          training=self.training)
+        pickle.dump(fair, open(file_path, 'wb'))
 
         s3_resource = get_s3_resource()
         s3_resource.meta.client.upload_file(

@@ -19,7 +19,7 @@ class MrFairness:
 
     prefix = 'aequitas'
 
-    def __init__(self, historic=False, query_date=None, training=True, save=False):
+    def __init__(self, historic=False, query_date=None, training=True):
         self.historic = historic
         self.query_date = query_date
         self.training = training
@@ -29,7 +29,6 @@ class MrFairness:
         self._load_data()
         self._load_model()
         self.predictions = self.model.predict(self.features)  # predicciones
-        self.save = save
         self._execute_aequitas_pipeline()
 
     def _load_data(self):
@@ -159,8 +158,6 @@ class MrFairness:
         self._compute_group_metrics()
         self._compute_bias_metrics()
         self._compute_fairness_metrics()
-        if self.save:
-            self._save_data()
     
     def _save_data(self):
         file_path = get_file_path(historic=self.historic, query_date=self.query_date,
