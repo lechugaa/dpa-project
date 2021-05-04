@@ -1,5 +1,4 @@
 from datetime import datetime
-from src.pipeline.bias_fairness import MrFairness
 from aequitas.group import Group
 from aequitas.bias import Bias
 from aequitas.fairness import Fairness
