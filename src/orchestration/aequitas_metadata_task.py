@@ -28,11 +28,11 @@ class AequitasMetaTask(CopyToTable):
 
     # formato de tabla
     columns = [("group_entities", "INT"),
-                "mean_positive_rate", "FLOAT",
-                "mean_ppr_disparity", "FLOAT",
-                "unsupervised_fairness", "BOOLEAN",
-                "supervised_fairness", "BOOLEAN",
-                "overall_fairness", "BOOLEAN"]
+                ("mean_positive_rate", "FLOAT"),
+                ("mean_ppr_disparity", "FLOAT"),
+                ("unsupervised_fairness", "BOOLEAN"),
+                ("supervised_fairness", "BOOLEAN"),
+                ("overall_fairness", "BOOLEAN")]
 
     def requires(self):
         return AequitasTestTask(historic=self.historic, query_date=self.query_date,
