@@ -1,6 +1,7 @@
 import datetime
 import luigi
 import luigi.contrib.s3
+import pickle
 
 from src.pipeline.ingesta_almacenamiento import get_s3_resource
 from src.pipeline.bias_fairness import MrFairness
