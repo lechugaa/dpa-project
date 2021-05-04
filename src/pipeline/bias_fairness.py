@@ -19,11 +19,12 @@ class MrFairness:
 
     prefix = 'aequitas'
 
-    def __init__(self, historic=False, query_date=None, training=True):
+    def __init__(self, historic=False, query_date=None, training=True, save=False):
         self.historic = historic
         self.query_date = query_date
         self.training = training
         self.prefix = MrFairness.prefix
+        self.save = save
         self.alpha_bias = 0.05  # se usa en la sección de bias
         self.protected_group = 'facility_type_restaurant'
         self._load_data()
@@ -158,12 +159,24 @@ class MrFairness:
         self._compute_group_metrics()
         self._compute_bias_metrics()
         self._compute_fairness_metrics()
+        if self.save:
+            self._save_data()
     
     def _save_data(self):
+
+        data = {'group': {'counts': self.group_counts_df,
+                          'percent': self.group_pct_df},
+                'bias': {'dataframe': self.extended_bias_df,
+                         'summary': self.bias_df},
+                'fairness': {'group': self.fairness_by_group,
+                            'attributes': self.fairness_by_atts,
+                            'overall': self.overall_fairness}
+                }
+
         file_path = get_file_path(historic=self.historic, query_date=self.query_date,
                                   prefix=MrFairness.prefix, training=self.training)
-        pickle.dump(self, open(file_path, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
-        print(f"Successfully saved MrFairness object in {file_path}")
+        pickle.dump(data, open(file_path, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+        print(f"Successfully saved data as a dictionary of dataframes in {file_path}")
 
 
 """

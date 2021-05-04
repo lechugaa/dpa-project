@@ -1,7 +1,6 @@
 import datetime
 import luigi
 import luigi.contrib.s3
-import pickle
 
 from src.pipeline.ingesta_almacenamiento import get_s3_resource
 from src.pipeline.bias_fairness import MrFairness
@@ -27,8 +26,7 @@ class AequitasTask(luigi.Task):
 
         # execute process
         fair = MrFairness(historic=self.historic, query_date=self.query_date,
-                          training=self.training)
-        pickle.dump(fair, open(file_path, 'wb'))
+                          training=self.training, save=True)
 
         s3_resource = get_s3_resource()
         s3_resource.meta.client.upload_file(
