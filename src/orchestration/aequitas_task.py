@@ -3,7 +3,7 @@ import luigi
 import luigi.contrib.s3
 
 from src.pipeline.ingesta_almacenamiento import get_s3_resource
-from src.pipeline.bias_fairness import MrFairness
+from src.pipeline.bias_fairness import MrFairnes
 from src.orchestration.selection_metadata_task import SelectionMetaTask
 from src.utils.general import get_file_path, get_upload_path, get_s3_credentials
 from src.utils.constants import bucket_name
