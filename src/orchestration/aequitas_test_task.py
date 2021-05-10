@@ -11,7 +11,7 @@ class AequitasTestTask(CopyToTable):
     # parameters
     historic = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
-    training = luigi.BoolParameter(default=True)
+    min_categories = luigi.IntParameter(default=2)
 
     # recuperando credenciales de base de datos
     credentials = get_db_credentials('conf/local/credentials.yaml')
@@ -34,13 +34,12 @@ class AequitasTestTask(CopyToTable):
         return AequitasTask(historic=self.historic, query_date=self.query_date)
 
     def rows(self):
-        tester = AequitasTester(historic=self.historic, query_date=self.query_date, training=self.training)
-                 # agregar más atributos luego -> o pruebas del restaurant facility o algo 
+        tester = AequitasTester(historic=self.historic, query_date=self.query_date, min_categories=self.min_categories)
         results = tester()
         if len(results.failures) > 0:
             for failure in results.failures:
                 print(failure)
-            raise Exception("Selection tests failed...")
+            raise Exception("Aequitas tests failed...")
 
         rows = [(str(datetime.date.today()), "bias-fairness-test")]
         for row in rows:

@@ -11,8 +11,6 @@ from src.utils.constants import bucket_name
 
 class AequitasTask(luigi.Task):
     historic = luigi.BoolParameter(default=False)
-    # confuso: en una parte requiere que sea True y en otra False
-    training = luigi.BoolParameter(default=True)
     query_date = luigi.DateParameter(default=datetime.date.today())
 
     def requires(self):
@@ -20,17 +18,15 @@ class AequitasTask(luigi.Task):
 
     def run(self):
         file_path = get_file_path(historic=self.historic, query_date=self.query_date,
-                                  prefix=MrFairness.prefix, training=self.training)
+                                  prefix=MrFairness.prefix, training=True)
         upload_path = get_upload_path(
-            historic=self.historic, query_date=self.query_date, prefix=MrFairness.prefix, training=self.training)
+            historic=self.historic, query_date=self.query_date, prefix=MrFairness.prefix, training=True)
 
         # execute process
-        fair = MrFairness(historic=self.historic, query_date=self.query_date,
-                          training=self.training, save=True)
+        fair = MrFairness(historic=self.historic, query_date=self.query_date, training=True, save=True)
 
         s3_resource = get_s3_resource()
-        s3_resource.meta.client.upload_file(
-            file_path, bucket_name, upload_path)
+        s3_resource.meta.client.upload_file(file_path, bucket_name, upload_path)
 
     def output(self):
         s3_credentials = get_s3_credentials("conf/local/credentials.yaml")
@@ -40,7 +36,7 @@ class AequitasTask(luigi.Task):
         )
 
         upload_path = get_upload_path(
-            historic=self.historic, query_date=self.query_date, prefix=MrFairness.prefix, training=self.training)
+            historic=self.historic, query_date=self.query_date, prefix=MrFairness.prefix, training=True)
         output_path = f"s3://{bucket_name}/{upload_path}"
 
         return luigi.contrib.s3.S3Target(path=output_path, client=client)

@@ -6,12 +6,12 @@ from src.utils.general import get_db_credentials
 from src.orchestration.aequitas_test_task import AequitasTestTask
 from src.pipeline.bias_fairness import MrFairness
 
-class AequitasMetaTask(CopyToTable):
 
+class AequitasMetaTask(CopyToTable):
     # parameters
     historic = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
-    training = luigi.BoolParameter(default=True)
+    min_categories = luigi.IntParameter(default=2)
     
     # recuperando credenciales de base de datos
     credentials = get_db_credentials('conf/local/credentials.yaml')
@@ -35,12 +35,10 @@ class AequitasMetaTask(CopyToTable):
                 ("overall_fairness", "BOOLEAN")]
 
     def requires(self):
-        return AequitasTestTask(historic=self.historic, query_date=self.query_date,
-                                 training=self.training)
+        return AequitasTestTask(historic=self.historic, query_date=self.query_date, min_categories=self.min_categories)
 
     def rows(self):
-        f= MrFairness(historic=self.historic, query_date=self.query_date,
-                              training=self)
+        f = MrFairness(historic=self.historic, query_date=self.query_date, training=True)
         rows = f.get_metadata()
         for row in rows:
             yield row

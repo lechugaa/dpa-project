@@ -1,15 +1,12 @@
-from datetime import datetime
 from aequitas.group import Group
 from aequitas.bias import Bias
 from aequitas.fairness import Fairness
-import datetime
-import os
 import pandas as pd
 import pickle
 
 from src.pipeline.limpieza_feature_eng import DataEngineer
 from src.pipeline.modelling import ModelSelector
-from src.utils.general import get_file_path, load_from_pickle, save_to_pickle, get_upload_path
+from src.utils.general import get_file_path, load_from_pickle
 from src.utils.general import get_object_from_s3
 
 ATTRIBUTES_COLS = ['attribute_name', 'attribute_value']
@@ -187,17 +184,3 @@ class MrFairness:
         overall_fairness = self.overall_fairness['Overall Fairness']
         return [(group_entities, mean_positive_rate, mean_ppr_disparity, unsupervised_fairness,
                  supervised_fairness, overall_fairness)]
-
-
-"""
-## pruebas EC2:
-from src.pipeline.bias_fairness import MrFairness
-from datetime import datetime
-date = datetime(2021, 4, 30)
-fair = MrFairness(historic=False, query_date=date, training=True)
-##
-
-
-
-
-"""
