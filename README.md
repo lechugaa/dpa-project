@@ -18,8 +18,8 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
    1. [Base de datos](#base-de-datos)
 1. [Estructura del proyecto](#estructura-del-proyecto)
 1. [Orquestación](#orquestación)
-   1. [Ejemplo: Metadatos de entrenamiento con datos históricos](#ejemplo-metadatos-de-entrenamiento-de-modelo-con-datos-históricos-al-día-de-hoy)
-   1. [Ejemplo: Metadatos de selección de modelo con datos históricos](#ejemplo-metadatos-de-selección-de-modelo-con-datos-históricos-al-día-20-de-abril-de-2021)
+   1. [Ejemplo: Metadatos de aequitas con datos históricos](#ejemplo-metadatos-de-aequitas-con-datos-históricos-al-día-de-hoy)
+   1. [Ejemplo: Metadatos de aequitas con ingesta continua](#ejemplo-metadatos-de-aequitas-con-ingesta-continua-de-la-semana-anterior-al-20-de-abril-de-2021)
 1. [Pruebas Unitarias](#pruebas-unitarias)
    1. [Ingesta](#ingesta)
    1. [Almacenamiento](#almacenamiento)
@@ -27,6 +27,8 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
    1. [Feature Engineering](#feature-engineering)
    1. [Entrenamiento](#entrenamiento)
    1. [Selección](#selección)
+   1. [Sesgo e inequidad](#sesgo-e-inequidad)
+1. [Análisis de sesgo e inequidad](#análisis-de-sesgo-e-inequidad)
 1. [Proceso de ingesta manual](#proceso-de-ingesta-manual)
    1. [Ingesta histórica](#ingesta-histórica)
    1. [Ingesta consecutiva](#ingesta-consecutiva)
@@ -190,6 +192,7 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
     │    ├── ingesta_almacenamiento.py                <- ingesta datos desde API y almacenamiento en S3
     │    ├── limpieza_feature_engineering.py          <- limpieza y generación de features de modelo
     │    ├── deprecated_funs.py                       <- funciones que probablemente no se necesiten
+    │    ├── bias_fairness.py                         <- funcionalidad de limpieza e inequidad
     │    └── modelling.py                             <- entrenamiento y selección de modelo
     │
     │
@@ -199,26 +202,41 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
     │    ├── clean_data_tests.py                      <- pruebas unitarias para limpieza y preprocesamiento
     │    ├── feature_eng_tests.py                     <- pruebas unitarias para feature engineering
     │    ├── training_tests.py                        <- pruebas unitarias para entrenamiento
-    │    └── selection_tests.py                       <- pruebas unitarias para selección de modelo
+    │    ├── selection_tests.py                       <- pruebas unitarias para selección de modelo
+    │    └── aequitas_tests.py                        <- pruebas unitarias para sesgo e inequidad
     │
     │
     └── orchestration                                 <- Luigi task definitions used across the project
          ├── data_ingestion_task.py                   <- Luigi task for data ingestion
+         ├── ingestion_testing_task.py                <- Luigi task for data ingestion unit tests
          ├── ingestion_metadata_task.py               <- Luigi task for data ingestion metadata
          ├── data_s3_upload_task.py                   <- Luigi task for data upload to S3
+         ├── data_s3_upload_testing_task.py           <- Luigi task for data upload to S3 unit tests
          ├── data_s3_upload_metadata_task.py          <- Luigi task for data upload to S3 metadata
          ├── clean_data_task.py                       <- Luigi task for data cleaning
+         ├── clean_data_test_task.py                  <- Luigi task for data cleaning unit tests
          ├── clean_data_metadata_task.py              <- Luigi task for data cleaning metadata
          ├── feature_engineering_task.py              <- Luigi task for feature engineering
-         └── feature_engineering_metadata_task.py     <- Luigi task for feature engineering metadata
+         ├── feature_eng_test_task.py                 <- Luigi task for feature engineering unit tests
+         ├── feature_engineering_metadata_task.py     <- Luigi task for feature engineering metadata
+         ├── training_task.py                         <- Luigi task for training
+         ├── training_test_task.py                    <- Luigi task for training unit tests
+         ├── training_metadata_task.py                <- Luigi task for training metadata
+         ├── selection_task.py                        <- Luigi task for model selection
+         ├── selection_test_task.py                   <- Luigi task for model selection unit tests
+         ├── selection_metadata_task.py               <- Luigi task for model selection metadata
+         ├── aequitas_task.py                         <- Luigi task for bias and fairness
+         ├── aequitas_test_task.py                    <- Luigi task for bias and fairness unit tests
+         └── aequitas_metadata_task.py                <- Luigi task for bias and fairness metadata
 ```
 
 ## Orquestación
 
-El proyecto actualmente cuenta con 18 tasks de orquestación. A continuación se muestra el DAG de Luigi:
+El proyecto actualmente cuenta con 21 tasks de orquestación. A continuación se muestra el DAG de Luigi:
 
-![DAG de Luigi](img/luigi_dag_c5_1.png "DAG de Luigi P1") 
-![DAG de Luigi](img/luigi_dag_c5_2_mod.png "DAG de Luigi P2") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
+![DAG de Luigi](img/luigi-dag-c6-1.png "DAG de Luigi P1") 
+![DAG de Luigi](img/luigi-dag-c6-2.png "DAG de Luigi P2") 
+![DAG de Luigi](img/luigi-dag-c6-3.png "DAG de Luigi P3") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
 
 Para ejecutar cualquiera de los siguientes tasks, una vez que se siguieron 
 [las instrucciones de configuración](#configuración), se requiere introducir la siguiente línea de comandos:
@@ -239,7 +257,7 @@ se requieren para ejecutarlo.
 
 
 | Etapa               | Tarea                                    | Script                              | Clase                        | Descripción                                                                      |
-|:-------------------:|:----------------------------------------:|:-----------------------------------:|:----------------------------:|----------------------------------------------------------------------------------|
+|:-------------------:|:----------------------------------------:|:-----------------------------------:|:----------------------------:|:--------------------------------------------------------------------------------:|
 | Ingesta             | Ingesta                                  | `data_ingestion_task`               | `DataIngestionTask`          | Guardar localmente en formato pickle los datos solicitados de la API de Chicago. |
 | Ingesta             | Pruebas unitarias de ingesta             | `ingestion_testing_task`            | `IngestionTesting`           | Realiza las pruebas unitarias de ingesta.                                        |
 | Ingesta             | Metadatos de ingesta                     | `ingestion_metadata_task`           | `IngestionMetadataTask`      | Genera los metadatos de `DataIngestionTask`.                                     |
@@ -258,18 +276,22 @@ se requieren para ejecutarlo.
 | Selección           | Selección                                | `selection_task`                    | `SelectionTask`              | A partir de los modelos entrenados selecciona el mejor basado en AUC.            |
 | Selección           | Pruebas unitarias de selección           | `selection_test_task`               | `SelectionTestTask`          | Realiza las pruebas unitarias de selección                                       |
 | Selección           | Metadatos de selección                   | `selection_metadata_task`           | `SelectionMetaTask`          | Genera los metadatos de `SelectionTask`.                                         |
+| Sesgo e inequidad   | Sesgo e inequidad                        | `aequitas_task`                     | `AequitasTask`               | A partir del modelo seleccionado, genera las métricas de bias y fairness         |
+| Sesgo e inequidad   | Pruebas unitarias de Sesgo e inequidad   | `aequitas_test_task`                | `AequitasTestTask`           | Realiza las pruebas unitarias de bias y fairness                                 |
+| Sesgo e inequidad   | Metadatos de Sesgo e inequidad           | `aequitas_metadata_task`            | `AequitasMetaTask`           | Genera los metadatos de bias y fairness                                          |
 
-Algunos ejemplos (adecuados para el checkpoint 5) son:
 
-### Ejemplo: Metadatos de entrenamiento de modelo con datos históricos al día de *hoy*
+Algunos ejemplos (adecuados para el checkpoint 6) son:
+
+### Ejemplo: Metadatos de aequitas con datos históricos al día de *hoy*
 ```
-PYTHONPATH='.' luigi --module src.orchestration.training_metadata_task TrainingMetaTask --local-scheduler --historic
+PYTHONPATH='.' luigi ---module src.orchestration.aequitas_metadata_task AequitasMetaTask --local-scheduler --historic
 ```
 
-### Ejemplo: Metadatos de selección de modelo con datos históricos al día 20 de abril de 2021
+### Ejemplo: Metadatos de aequitas con ingesta continua de la semana anterior al 20 de abril de 2021
 
 ```
-PYTHONPATH='.' luigi --module src.orchestration.selection_metadata_task SelectionMetaTask --local-scheduler --historic --query-date 2021-04-20
+PYTHONPATH='.' luigi --module src.orchestration.aequitas_metadata_task AequitasMetaTask --local-scheduler --query-date 2021-04-20
 ```
 
 ## Pruebas Unitarias
@@ -343,6 +365,46 @@ PYTHONPATH='.' luigi --module src.orchestration.selection_metadata_task Selectio
 
 Para pruebas rápidas se recomienda no incluir el flag de `--historic` para que el entrenamiento sea más rápido.
 Para producción es obligatorio incluirlo.
+
+### Sesgo e inequidad
+
+Las pruebas unitarias de sesgo e inequidad son las siguientes:
+
+* `test_df_not_empty`: verifica que en verdad se estén generando las métricas de sesgo e inequidad al checar que no
+estén vacíos los df.
+
+* `test_number_of_categories`: verifica que existan al menos dos categorías de las variables de atributos protegidos.
+Este comportamiento se puede modificar al usar el parámetro `--min-categories`
+
+*Nota:* si se solicita un número de categorías mayor a las que existen naturalmente en los datos, esta prueba unitaria 
+fallará. Un ejemplo de este caso sería el siguiente comando:
+
+```
+PYTHONPATH='.' luigi --module src.orchestration.aequitas_metadata_task AequitasMetaTask --min-categories 100
+```
+
+Para pruebas rápidas se recomienda no incluir el flag de `--historic` para que el entrenamiento sea más rápido.
+Para producción es obligatorio incluirlo.
+
+## Análisis de sesgo e inequidad
+
+* **¿Cuáles son los atributos protegidos?** Variable `facility_type`
+  
+* **¿Qué grupos de referencia tiene cada atributo protegido?, explica el por qué.** Restaurante. Debido a que en mayor 
+  proporción son los que obtienen inspecciones favorables (pasan la visita) y buscamos identificar si existe algún tipo
+  de ventaja relativa.
+  
+* **¿Tu modelo es punitivo o asistivo? explica por qué.** Punitivo. La acción asociada a la visita al establecimiento
+  (pasar o no pasar la inspección) implicaría clausurar o cerrar el establecimiento. Asistivo. La decisión se está 
+  tomando desde el punto de vista del establecimiento, por lo que el modelo asiste en identificar si este pasará o no 
+  la inspección y tomar acciones pertinentes para enfrentar la visita.
+  
+* **¿Qué métricas cuantificarás ocuparás en sesgo e inequidad? explica por qué.** Dado que el tipo de modelo es punitivo, 
+  nos interesa que todos los establecimientos tengan la misma tasa de falsos positivos (FPR), dada las consecuencias 
+  que implican, por lo que buscamos cuantificar si hay algunos tipos de establecimientos favorecidos o desfavorecidos.
+  FOR. Nos interesa identificar y cuantificar la presencia de sesgo hacia algún tipo de establecimiento respecto a no 
+  ser clasificado como etiqueta positiva (pasar la inspección). En ese sentido, nuestro objetivo sería lograr paridad 
+  en las tasas de falsos negativos en todos los grupos.
 
 ## Proceso de ingesta manual
 

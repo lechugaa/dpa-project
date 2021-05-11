@@ -49,6 +49,15 @@ CREATE TABLE test_selection_metadata (
     best_auc FLOAT NOT NULL
 );
 
+CREATE TABLE aequitas_metadata (
+    group_entities INT NOT NULL,
+    mean_positive_rate FLOAT NOT NULL,
+    mean_ppr_disparity FLOAT NOT NULL,
+    unsupervised_fairness BOOLEAN NOT NULL,
+    supervised_fairness BOOLEAN NOT NULL,
+    overall_fairness BOOLEAN NOT NULL
+);
+
 CREATE TABLE unittests(
     test_date DATE NOT NULL,
     test_name VARCHAR(250) NOT NULL
