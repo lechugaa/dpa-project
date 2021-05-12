@@ -394,15 +394,11 @@ Para producción es obligatorio incluirlo.
   proporción son los que obtienen inspecciones favorables (pasan la visita) y buscamos identificar si existe algún tipo
   de ventaja relativa.
   
-* **¿Tu modelo es punitivo o asistivo? explica por qué.** Punitivo. La acción asociada a la visita al establecimiento
-  (pasar o no pasar la inspección) implicaría clausurar o cerrar el establecimiento. Asistivo. La decisión se está 
-  tomando desde el punto de vista del establecimiento, por lo que el modelo asiste en identificar si este pasará o no 
+* **¿Tu modelo es punitivo o asistivo? explica por qué.** Asistivo. La decisión se está 
+  tomando desde el punto de vista del establecimiento, dado ese contexto, el modelo tiene la función de identificar si este pasará o no 
   la inspección y tomar acciones pertinentes para enfrentar la visita.
   
-* **¿Qué métricas cuantificarás ocuparás en sesgo e inequidad? explica por qué.** Dado que el tipo de modelo es punitivo, 
-  nos interesa que todos los establecimientos tengan la misma tasa de falsos positivos (FPR), dada las consecuencias 
-  que implican, por lo que buscamos cuantificar si hay algunos tipos de establecimientos favorecidos o desfavorecidos.
-  FOR. Nos interesa identificar y cuantificar la presencia de sesgo hacia algún tipo de establecimiento respecto a no 
+* **¿Qué métricas cuantificarás ocuparás en sesgo e inequidad? explica por qué.** FOR. Nos interesa identificar y cuantificar la presencia de sesgo hacia algún tipo de establecimiento respecto a no 
   ser clasificado como etiqueta positiva (pasar la inspección). En ese sentido, nuestro objetivo sería lograr paridad 
   en las tasas de falsos negativos en todos los grupos.
 
