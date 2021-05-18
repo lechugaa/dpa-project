@@ -23,7 +23,7 @@ class IngestionMetadataTask(CopyToTable):
     port = credentials['port']
 
     # nombre de tabla de metadatos
-    table = 'test_ingestion_metadata'
+    table = 'ingestion_metadata'
 
     # formato de tabla
     columns = [("ingestion_date", "DATE"),

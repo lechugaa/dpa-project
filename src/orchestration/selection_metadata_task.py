@@ -26,7 +26,7 @@ class SelectionMetaTask(CopyToTable):
     port = credentials['port']
 
     # nombre de tabla de meta datos
-    table = 'test_selection_metadata'
+    table = 'selection_metadata'
 
     # formato de tabla
     columns = [("historic", "BOOLEAN"),

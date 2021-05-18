@@ -23,7 +23,7 @@ class UploadMetadataTask(CopyToTable):
     port = credentials['port']
 
     # nombre de tabla de metadatos
-    table = 'test_upload_metadata'
+    table = 'upload_metadata'
 
     # formato de tabla
     columns = [("ingestion_date", "DATE"),

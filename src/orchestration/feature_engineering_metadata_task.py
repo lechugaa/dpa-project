@@ -24,7 +24,7 @@ class FeatureEngineeringMetaTask(CopyToTable):
     port = credentials['port']
 
     # nombre de tabla de meta datos
-    table = 'test_fe_metadata'
+    table = 'fe_metadata'
 
     # formato de tabla
     columns = [("original_rows", "INT"),

@@ -24,7 +24,7 @@ class TrainingMetaTask(CopyToTable):
     port = credentials['port']
 
     # nombre de tabla de meta datos
-    table = 'test_training_metadata'
+    table = 'training_metadata'
 
     # formato de tabla
     columns = [("historic", "BOOLEAN"),

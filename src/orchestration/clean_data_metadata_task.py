@@ -23,7 +23,7 @@ class CleanDataMetaTask(CopyToTable):
     port = credentials['port']
 
     # nombre de tabla de meta datos
-    table = 'test_clean_metadata'
+    table = 'clean_metadata'
 
     # formato de tabla
     columns = [("original_rows", "INT"),
