@@ -15,7 +15,8 @@ class SelectionTask(luigi.Task):
     historic = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
     desired_models = luigi.IntParameter(default=2)
-    fpr_restriction = luigi.FloatParameter(default=1.00)
+    # TODO: cambiar a un valor que tenga sentido
+    fpr_restriction = luigi.FloatParameter(default=0.20)
 
     def requires(self):
         return TrainingMetaTask(historic=self.historic, query_date=self.query_date, desired_models=self.desired_models)

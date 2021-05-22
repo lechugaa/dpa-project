@@ -113,6 +113,7 @@ class ModelSelector:
 
         for model in self.models:
             model.fit(self.x_train, self.y_train)
+            # TODO: histograma de estas probas
             label_scores = model.predict_proba(self.x_test)
             auc = roc_auc_score(self.y_test, label_scores[:, 1])
             fpr, tpr, thresholds = roc_curve(self.y_test, label_scores[:, 1], pos_label=1)
