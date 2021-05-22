@@ -12,7 +12,7 @@ class SelectionMetaTask(CopyToTable):
     historic = luigi.BoolParameter(default=False)
     query_date = luigi.DateParameter(default=datetime.date.today())
     desired_models = luigi.IntParameter(default=2)
-    fpr_restriction = luigi.FloatParameter(default=1.00)
+    fpr_restriction = luigi.FloatParameter(default=0.20)
     desired_classes = luigi.ListParameter(default=[0, 1])
 
     # recuperando credenciales de base de datos
