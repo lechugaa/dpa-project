@@ -19,16 +19,18 @@ class DataCleaner:
 
     def __init__(self, historic=False, query_date=None):
         self.df = get_pickle_from_s3_to_pandas(historic, query_date)
-        #Parche
-        #self.df = pd.DataFrame(pd.read_pickle('temp/historic-inspections-2021-02-22.pkl'))
-        # Parche
         self.historic = historic
         self.query_date = query_date
         self.prefix = DataCleaner.prefix
 
     def _subset_cols(self):
-        self.df = self.df[['inspection_id', 'facility_type', 'risk', 'zip', 'inspection_date',
-                           'inspection_type', 'results', 'violations', 'latitude', 'longitude']]
+
+        if self.historic:
+            self.df = self.df[['inspection_id', 'facility_type', 'risk', 'zip', 'inspection_date',
+                               'inspection_type', 'results', 'violations', 'latitude', 'longitude']]
+        else:
+            self.df = self.df[['inspection_id', 'license_', 'facility_type', 'risk', 'zip', 'inspection_date',
+                               'inspection_type', 'results', 'violations', 'latitude', 'longitude']]
 
     def _fill_nas(self):
         self.df['zip'] = self.df['zip'].fillna(0)
@@ -177,7 +179,7 @@ class DataCleaner:
         # Codigo Agregado MH
         self._subset_cols()
         self._fill_nas()
-        self.df.dropna(axis = 0, inplace = True)
+        self.df.dropna(axis=0, inplace=True)
         self._change_data_types()
         self._clean_results()
         self._standardize_column_strings(['facility_type', 'risk', 'inspection_type'])
@@ -221,9 +223,6 @@ class DataEngineer:
         self.query_date = query_date
         self.training = training
         self.df = self._get_df()
-        # Parche
-        # self.df = pd.DataFrame(pickle.load(open('temp/clean-historic-inspections-2021-02-22.pkl', 'rb')))
-        # end parche
         self.original_rows, self.original_cols = self.df.shape
         self.prefix = DataEngineer.prefix
 
@@ -388,7 +387,7 @@ class DataEngineer:
             self.X_train.drop(columns = ['inspection_id', 'inspection_date', 'violations'], inplace = True)
             self.X_test.drop(columns = ['inspection_id', 'inspection_date', 'violations'], inplace = True)
         else:
-            self.X_consec.drop(columns = ['inspection_id', 'inspection_date', 'violations'], inplace = True)
+            self.X_consec.drop(columns = ['inspection_date', 'violations'], inplace=True)
 
     def _change_labels_y(self):
         

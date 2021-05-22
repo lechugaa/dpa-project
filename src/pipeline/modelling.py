@@ -1,3 +1,4 @@
+import os
 import pickle
 import time
 import numpy as np
@@ -8,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve
 
-from src.utils.general import get_object_from_s3, get_file_path, load_from_pickle
+from src.utils.general import get_object_from_s3, get_file_path, load_from_pickle, save_to_pickle
 
 
 class Modelling:
@@ -86,6 +87,7 @@ class ModelSelector:
         self._get_data()
         self._evaluate_models()
         self._get_cutting_threshold()
+        self._save_cutting_threshold()
         if self.save_model:
             self._save_model()
         self.get_selection_metadata()
@@ -151,6 +153,12 @@ class ModelSelector:
         metrics_report = self._get_metrics_report(precision, recall, thresholds_2)
         negocio = metrics_report[metrics_report.fpr <= self.fpr_restriction]
         self.cutting_threshold = negocio.head(1).threshold.values[0]
+
+    def _save_cutting_threshold(self):
+        root_path = os.getcwd()
+        cutting_info = {'cutting_threshold': self.cutting_threshold}
+        path = f"{root_path}/temp/cutting_info.pkl"
+        save_to_pickle(cutting_info, path)
 
     def get_selection_metadata(self):
         best_model_desc = str(self.best_model)

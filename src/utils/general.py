@@ -170,8 +170,15 @@ def get_pickle_from_s3_to_pandas(historic=False, query_date=None):
 
     return df
 
+
 def get_object_from_s3(historic=False, query_date=None, prefix='feature-engineering', training=True):
     client = get_s3_resource()
     pickle_path = get_upload_path(historic=historic, query_date=query_date, prefix=prefix, training=training)
     obj = client.Object(bucket_name, pickle_path).get()['Body'].read()
+    return pickle.loads(obj)
+
+
+def get_model_from_s3(model_path):
+    client = get_s3_resource()
+    obj = client.Object(bucket_name, model_path).get()['Body'].read()
     return pickle.loads(obj)
