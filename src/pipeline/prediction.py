@@ -63,6 +63,7 @@ class Predictor:
 
     def _generate_df(self):
         self.df = pd.DataFrame({
+            'inspection_id': self.identifiers_df.inspection_id,
             'license_no': self.identifiers_df.license_,
             'score': self.scores,
             'labels': self.labels

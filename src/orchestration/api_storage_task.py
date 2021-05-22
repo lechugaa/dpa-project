@@ -25,7 +25,8 @@ class ApiStorageTask(CopyToTable):
     table = 'api.scores'
 
     # formato de tabla
-    columns = [("license_no", "VARCHAR(20)"),
+    columns = [("inspection_id", "BIGINT"),
+                ("license_no", "BIGINT"),
                ("score", "FLOAT"),
                ("labels", "INT"),
                ("threshold", "FLOAT"),
@@ -37,7 +38,6 @@ class ApiStorageTask(CopyToTable):
     def rows(self):
         file_path = get_file_path(historic=False, query_date=self.query_date, prefix="predictions", training=False)
         df = load_from_pickle(file_path)
-        df.license_no = df.license_no.astype(str)
         rows = df.to_records(index=False)
         for row in rows:
             yield row
