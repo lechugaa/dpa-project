@@ -79,7 +79,8 @@ class Predictor:
         predictions = self.labels.shape[0]
         positive_labels = len([label for label in self.labels if label == 1])
         negative_labels = predictions - positive_labels
+        prediction_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-        return [(self.query_date,
+        return [(self.query_date, prediction_date,
                  self.model_date, self.model_path, self.cutting_threshold,
                  predictions, positive_labels, negative_labels)]

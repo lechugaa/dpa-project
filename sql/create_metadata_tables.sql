@@ -58,6 +58,17 @@ CREATE TABLE aequitas_metadata (
     overall_fairness BOOLEAN NOT NULL
 );
 
+CREATE TABLE prediction_metadata (
+    query_date DATE NOT NULL,
+    prediction_date DATE NOT NULL,
+    model_date DATE NOT NULL,
+    model_s3_path VARCHAR(250) NOT NULL,
+    threshold FLOAT NOT NULL,
+    no_predictions INT NOT NULL,
+    no_positive_labels INT NOT NULL,
+    no_negative_labels INT NOT NULL
+);
+
 CREATE TABLE unittests(
     test_date DATE NOT NULL,
     test_name VARCHAR(250) NOT NULL

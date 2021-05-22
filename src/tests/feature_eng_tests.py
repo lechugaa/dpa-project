@@ -39,6 +39,6 @@ class FeatureTester(unittest.TestCase):
             assert self.y.shape[0] != 0, "y_pred df is empty"
 
     def runTest(self):
-        print("Corriendo tests de limpieza de datos...")
+        print("Corriendo tests de feature engineering de datos...")
         self.test_df_not_empty()
-        print(">>>> Tests de limpieza terminados <<<<")
+        print(">>>> Tests de feature engineering terminados <<<<")
