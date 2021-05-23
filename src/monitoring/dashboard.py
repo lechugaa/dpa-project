@@ -1,22 +1,15 @@
 import dash
-import os
-import re
-import datetime
 import plotly.express as px
 import pickle as pkl
 import pandas as pd
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+from src.utils.general import get_db_credentials
 
 
-paths = [f for f in os.listdir('temp') if re.match(r'predictions-consecutive-inspections-', f)]
-date_fmt = "%Y-%m-%d"
-dates = [datetime.datetime.strptime(path.split('.')[0][-10:], date_fmt) for path in paths]
-predictions_path = f"temp/predictions-consecutive-inspections-{max(dates).strftime(date_fmt)}.pkl"
-
-with open(predictions_path, 'rb') as f:
-    predictions_consec = pkl.load(f)
+db_string = get_db_credentials('conf/local/credentials.yaml')['string']
+predictions_consec = pd.read_sql_table(table_name='monitoring_scores', con=db_string)
 
 with open('temp/model-selection-predicted-scores.pkl', 'rb') as f:
     predictions_model = pkl.load(f)
