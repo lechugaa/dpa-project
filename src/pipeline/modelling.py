@@ -90,6 +90,7 @@ class ModelSelector:
         self._save_cutting_threshold()
         if self.save_model:
             self._save_model()
+            self._save_predictions()
         self.get_selection_metadata()
 
     def _get_trained_models(self):
@@ -160,7 +161,13 @@ class ModelSelector:
         cutting_info = {'cutting_threshold': self.cutting_threshold}
         path = f"{root_path}/temp/cutting_info.pkl"
         save_to_pickle(cutting_info, path)
-
+        
+    def _save_predictions(self):
+        root_path = os.getcwd()
+        preds = self.label_scores
+        path = f"{root_path}/temp/{self.prefix}-predicted-scores.pkl"
+        save_to_pickle(preds, path)
+        
     def get_selection_metadata(self):
         best_model_desc = str(self.best_model)
         possible_models = len(self.models)
