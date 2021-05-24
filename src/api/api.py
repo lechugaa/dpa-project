@@ -8,7 +8,7 @@ from src.utils.general import get_db_credentials
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = get_db_credentials('conf/local/credentials.yaml')['string']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-api = Api(app)
+api = Api(app, default='scores', default_label='Chicago Food Inspections Predictions API')
 
 db = SQLAlchemy(app)
 
