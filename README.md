@@ -17,9 +17,15 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
    1. [Constantes](#constantes)
    1. [Base de datos](#base-de-datos)
 1. [Estructura del proyecto](#estructura-del-proyecto)
+1. [Levantamiento del producto de datos](#levantamiento-del-producto-de-datos)
+   1. [Entrenamiento, selección de modelo y sesgo e inequidad](#entrenamiento-selección-de-modelo-y-sesgo-e-inequidad)
+   1. [Predicción, API y monitoreo del modelo](#predicción-api-y-monitoreo-del-modelo)
+1. [Levantamiento de API](#levantamiento-de-api)
+1. [Levantamiento de dashboard de monitoreo](#levantamiento-de-dashboard-de-monitoreo)
 1. [Orquestación](#orquestación)
-   1. [Ejemplo: Metadatos de aequitas con datos históricos](#ejemplo-metadatos-de-aequitas-con-datos-históricos-al-día-de-hoy)
-   1. [Ejemplo: Metadatos de aequitas con ingesta continua](#ejemplo-metadatos-de-aequitas-con-ingesta-continua-de-la-semana-anterior-al-20-de-abril-de-2021)
+   1. [Ejemplo: Generar metadatos de predicción](#ejemplo-generar-metadatos-de-predicción-con-ingesta-continua-del-día-de-hoy)
+   1. [Ejemplo: Almacenamiento de predicciones en base de datos de API](#ejemplo-almacenamiento-de-predicciones-en-base-de-datos-de-api-con-ingesta-continua-del-día-de-hoy)
+   1. [Ejemplo: Almacenamiento de predicciones en base de datos de monitoreo](#ejemplo-almacenamiento-de-predicciones-en-base-de-datos-de-monitoreo-con-ingesta-continua-del-20-de-abril-de-2021)
 1. [Pruebas Unitarias](#pruebas-unitarias)
    1. [Ingesta](#ingesta)
    1. [Almacenamiento](#almacenamiento)
@@ -28,6 +34,7 @@ Un proyecto de punta a punta realizado en la materia de _Data Product Architectu
    1. [Entrenamiento](#entrenamiento)
    1. [Selección](#selección)
    1. [Sesgo e inequidad](#sesgo-e-inequidad)
+   1. [Predicción](#predicción)
 1. [Análisis de sesgo e inequidad](#análisis-de-sesgo-e-inequidad)
 1. [Proceso de ingesta manual](#proceso-de-ingesta-manual)
    1. [Ingesta histórica](#ingesta-histórica)
@@ -122,6 +129,7 @@ data_base:
    database: NOMBRE_DE_BASE_DE_DATOS
    host: IP_DE_INSTANCIA_DE_BASE_DE_DATOS_EN_AWS
    port: PUERTO
+   string: postgresql://<usuario>:<contraseña>@<host>/<nombre-base-de-datos>
 ...
 ```
 
@@ -144,6 +152,16 @@ configurada en caso de ser necesario. No obstante, se recomienda, dejar que Luig
 pasos adicionales de configuración. Para que esto suceda automáticamente, al correr el orquestador, es necesario
 que la base de datos del archivo de credenciales exista y que se hayan agregado correctamente los elementos de conexión
 a este mismo archivo.
+
+**¡Importante!**
+
+Es importante, para lograr exponer el modelo en una API, generar el esquema necesario en la base de datos para que luigi
+pueda almacenar las observaciones de las cuales se alimenta la misma. Para crear dicho esquema es necesario correr el 
+siguiente comando en la base de datos:
+
+```
+CREATE SCHEMA api;
+```
 
 ## Estructura del proyecto
 
@@ -185,16 +203,16 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
     ├── utils                                         <- Functions used across the project
     │   ├── general.py                                <- Obtención de credenciales de AWS
     │   └── constants.py                              <- Definición de constantes del proyecto
-    ├── etl                                           <- Scripts to transform data from raw to intermediate states
     │
+    ├── etl                                           <- Scripts to transform data from raw to intermediate states
     │
     ├── pipeline
     │    ├── ingesta_almacenamiento.py                <- ingesta datos desde API y almacenamiento en S3
     │    ├── limpieza_feature_engineering.py          <- limpieza y generación de features de modelo
     │    ├── deprecated_funs.py                       <- funciones que probablemente no se necesiten
     │    ├── bias_fairness.py                         <- funcionalidad de limpieza e inequidad
-    │    └── modelling.py                             <- entrenamiento y selección de modelo
-    │
+    │    ├── modelling.py                             <- entrenamiento y selección de modelo
+    │    └── prediction.py                            <- predicción de modelo
     │
     ├── tests
     │    ├── ingestion_tests.py                       <- pruebas unitarias para ingestión
@@ -203,8 +221,14 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
     │    ├── feature_eng_tests.py                     <- pruebas unitarias para feature engineering
     │    ├── training_tests.py                        <- pruebas unitarias para entrenamiento
     │    ├── selection_tests.py                       <- pruebas unitarias para selección de modelo
-    │    └── aequitas_tests.py                        <- pruebas unitarias para sesgo e inequidad
+    │    ├── aequitas_tests.py                        <- pruebas unitarias para sesgo e inequidad
+    │    └── prediction_tests.py                      <- pruebas unitarias para predicción
     │
+    ├── api
+    │    └── api.py                                   <- código de Flask Swagger para levantamiento de API
+    │
+    ├── monitoring
+    │    └── dahsboard.py                             <- código de dash para dashboard de monitoreo de modelo
     │
     └── orchestration                                 <- Luigi task definitions used across the project
          ├── data_ingestion_task.py                   <- Luigi task for data ingestion
@@ -227,26 +251,97 @@ Esta es la estructura del proyecto incluyendo notebook del EDA llamado `eda.ipyn
          ├── selection_metadata_task.py               <- Luigi task for model selection metadata
          ├── aequitas_task.py                         <- Luigi task for bias and fairness
          ├── aequitas_test_task.py                    <- Luigi task for bias and fairness unit tests
-         └── aequitas_metadata_task.py                <- Luigi task for bias and fairness metadata
+         ├── aequitas_metadata_task.py                <- Luigi task for bias and fairness metadata 
+         ├── prediction_task.py                       <- Luigi task for generating predictions
+         ├── prediction_test_task.py                  <- Luigi task for prediction unit tests
+         ├── prediction_metadata_task.py              <- Luigi task for prediction metadata
+         ├── api_storage_task.py                      <- Luigi task to store predictions on api db
+         └── monitoring_task.py                       <- Luigi task to store predictions on monitoring db
 ```
+
+## Levantamiento del producto de datos
+
+### Entrenamiento, selección de modelo y sesgo e inequidad
+
+Una vez que se siguió adecuadamente las instrucciones de configuración, la primera etapa para levantar el producto de
+datos en realizar la rama de generación del modelo predictivo. Para ello basta con llamar la task de Luigi encargada
+de generar los metadatos de sesgo e inequidad (ver sección de orquestación para más información). El comando en
+específico a utilizar es el siguiente:
+
+```
+PYTHONPATH='.' luigi --module src.orchestration.aequitas_metadata_task AequitasMetaTask --historic [--local-scheduler] [--query-date <YYYY-MM-DD>]
+```
+
+En general se espera no tener que utilizar el parámetro `query-date`, pero de ser necesario este servirá para ejecutar
+las tareas de generación del modelo con datos históricos hasta la fecha especificada. Por ejemplo si se quisiera entrenar
+el modelo con los datos históricos hasta el 4 de enero de 2021 se utilizaría la siguiente línea:
+
+```
+PYTHONPATH='.' luigi --module src.orchestration.aequitas_metadata_task AequitasMetaTask --historic [--local-scheduler] --query-date 2021-01-04
+```
+
+Con estos comandos se generará un modelo a partir del cual se podrán hacer predicciones semana con semana. 
+
+### Predicción, API y monitoreo del modelo
+
+Posterior a contar con un modelo seleccionado siguiendo la sección anterior, es posible realizar toda la rama de predicciones
+semanales con el siguiente comando:
+
+```
+PYTHONPATH='.' luigi --module src.orchestration.monitoring_task MonitoringTask [--local-scheduler] [--query-date <YYYY-MM-DD>]
+```
+
+Como en el caso anterior el uso de `query-date` permitirá hacer las predicciones de fechas en el pasado. En caso de
+omitirse, que es el uso esperado para el proyecto, se harán las predicciones con los 7 días anteriores al día de
+ejecución. La intención de este proyecto es que esta rama se ejecute todos los lunes a las 4 am por lo que siempre
+se estarán generando las predicciones de la semana pasada.
+
+## Levantamiento de API
+
+Si ya se cuenta con al menos una semana de predicciones, se puede levantar la API del producto de datos usando el
+siguiente comando:
+
+```
+python3 -m src.api.api
+```
+
+La API quedará disponible con este comando en: `http://0.0.0.0:5000/` donde se encuentra la documentación para la misma.
+
+## Levantamiento de dashboard de monitoreo
+
+Si ya se cuenta con al menos una semana de predicciones, se puede levantar el dashboard de monitoreo del producto de 
+datos usando el siguiente comando:
+
+```
+python3 -m src.monitoring.dashboard
+```
+
+El dashboard quedará disponible con este comando en: `http://0.0.0.0:8050/`.
+
+![Dashboard de monitoreo](img/dashboard-example.png "Ejemplo de resultado de dashboard de monitoreo") 
 
 ## Orquestación
 
-El proyecto actualmente cuenta con 21 tasks de orquestación. A continuación se muestra el DAG de Luigi:
+### Orquestación de rama de entrenamiento, selección y sesgo e inequidad
+
+Esta rama cuenta con 21 tasks de orquestación. 
+A continuación se muestra el DAG de Luigi:
 
 ![DAG de Luigi](img/luigi-dag-c6-1.png "DAG de Luigi P1") 
 ![DAG de Luigi](img/luigi-dag-c6-2.png "DAG de Luigi P2") 
 ![DAG de Luigi](img/luigi-dag-c6-3.png "DAG de Luigi P3") ![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi")
 
 Para ejecutar cualquiera de los siguientes tasks, una vez que se siguieron 
-[las instrucciones de configuración](#configuración), se requiere introducir la siguiente línea de comandos:
+[las instrucciones de configuración](#configuración), se requiere introducir la siguiente línea de comandos en el
+directorio raíz del proyecto:
 
 ```
-PYTHONPATH='.' luigi --module src.orchestration.<NOMBRE_DE_SCRIPT> <NOMBRE_DE_CLASE> [--local-scheduler] [--historic] [--query-date <YYYY-MM-DD>]
+PYTHONPATH='.' luigi --module src.orchestration.<NOMBRE_DE_SCRIPT> <NOMBRE_DE_CLASE> --historic [--local-scheduler] [--query-date <YYYY-MM-DD>]
 ```
 
-* `--historic`: si se incluye este argumento se realizarán las tareas con los datos históricos, mientras que si se omite 
-  se realizarán con los datos de la última semana (ingesta continua).
+* `--historic`: este argumento debe incluirse SIEMPRE en etapas productivas de esta rama de orquestación. Este permite 
+  que todos las tareas de entrenamiento, selección de modelo y sesgo e inequidad se realicen con todas las observaciones
+  históricas a la fecha.
 * `--query-date`: se debe agregar la fecha de ingesta deseada en formato YYYY-MM-DD. Si se omite este argumento, se
    utilizará la fecha del día de ejecución en el código.
 * `--local-scheduler`: ejecuta las tareas de Luigi sin necesidad de iniciar un scheduler. Para omitirse es necesario
@@ -276,22 +371,74 @@ se requieren para ejecutarlo.
 | Selección           | Selección                                | `selection_task`                    | `SelectionTask`              | A partir de los modelos entrenados selecciona el mejor basado en AUC.            |
 | Selección           | Pruebas unitarias de selección           | `selection_test_task`               | `SelectionTestTask`          | Realiza las pruebas unitarias de selección                                       |
 | Selección           | Metadatos de selección                   | `selection_metadata_task`           | `SelectionMetaTask`          | Genera los metadatos de `SelectionTask`.                                         |
-| Sesgo e inequidad   | Sesgo e inequidad                        | `aequitas_task`                     | `AequitasTask`               | A partir del modelo seleccionado, genera las métricas de bias y fairness         |
-| Sesgo e inequidad   | Pruebas unitarias de Sesgo e inequidad   | `aequitas_test_task`                | `AequitasTestTask`           | Realiza las pruebas unitarias de bias y fairness                                 |
-| Sesgo e inequidad   | Metadatos de Sesgo e inequidad           | `aequitas_metadata_task`            | `AequitasMetaTask`           | Genera los metadatos de bias y fairness                                          |
+| Sesgo e inequidad   | Sesgo e inequidad                        | `aequitas_task`                     | `AequitasTask`               | A partir del modelo seleccionado, genera las métricas de bias y fairness.        |
+| Sesgo e inequidad   | Pruebas unitarias de Sesgo e inequidad   | `aequitas_test_task`                | `AequitasTestTask`           | Realiza las pruebas unitarias de bias y fairness.                                |
+| Sesgo e inequidad   | Metadatos de Sesgo e inequidad           | `aequitas_metadata_task`            | `AequitasMetaTask`           | Genera los metadatos de bias y fairness.                                         |
 
 
-Algunos ejemplos (adecuados para el checkpoint 6) son:
+### Orquestación de rama de predicción, habilitación de API y monitoreo de modelos
 
-### Ejemplo: Metadatos de aequitas con datos históricos al día de *hoy*
+Esta rama cuenta con 17 tasks de orquestación. 
+A continuación se muestra el DAG de Luigi:
+
+![DAG de Luigi](img/luigi-dag-c7-1.png "DAG de Luigi Predicción P1")
+![DAG de Luigi](img/luigi-dag-c7-2.png "DAG de Luigi Predicción P2") 
+![Colores de Luigi](img/luigi_explanation.png "Estados de Luigi Predicción")
+
+Para ejecutar cualquiera de los siguientes tasks, una vez que se siguieron 
+[las instrucciones de configuración](#configuración), se requiere introducir la siguiente línea de comandos en el
+directorio raíz del proyecto::
+
 ```
-PYTHONPATH='.' luigi ---module src.orchestration.aequitas_metadata_task AequitasMetaTask --local-scheduler --historic
+PYTHONPATH='.' luigi --module src.orchestration.<NOMBRE_DE_SCRIPT> <NOMBRE_DE_CLASE> [--local-scheduler] [--query-date <YYYY-MM-DD>]
 ```
 
-### Ejemplo: Metadatos de aequitas con ingesta continua de la semana anterior al 20 de abril de 2021
+* `--query-date`: se debe agregar la fecha de ingesta deseada en formato YYYY-MM-DD. Si se omite este argumento, se
+   utilizará la fecha del día de ejecución en el código.
+* `--local-scheduler`: ejecuta las tareas de Luigi sin necesidad de iniciar un scheduler. Para omitirse es necesario
+   estar corriendo un scheduler a través de comando `luigid` en otra consola.
+  
+La siguiente tabla se detallan todos los tasks del proyecto así como el `NOMBRE_DE_SCRIPT` y `NOMBRE_DE_CLASE` que 
+se requieren para ejecutarlo.
+
+| Etapa               | Tarea                                    | Script                              | Clase                        | Descripción                                                                      |
+|:-------------------:|:----------------------------------------:|:-----------------------------------:|:----------------------------:|:--------------------------------------------------------------------------------:|
+| Ingesta             | Ingesta                                  | `data_ingestion_task`               | `DataIngestionTask`          | Guardar localmente en formato pickle los datos solicitados de la API de Chicago. |
+| Ingesta             | Pruebas unitarias de ingesta             | `ingestion_testing_task`            | `IngestionTesting`           | Realiza las pruebas unitarias de ingesta.                                        |
+| Ingesta             | Metadatos de ingesta                     | `ingestion_metadata_task`           | `IngestionMetadataTask`      | Genera los metadatos de `DataIngestionTask`.                                     |
+| Almacenamiento      | Almacenamiento                           | `data_s3_upload_task`               | `DataS3UploadTask`           | Sube a S3 la ingesta de datos obtenida en la `DataIngestionTask`.                |
+| Almacenamiento      | Pruebas unitarias de almacenamiento      | `data_s3_upload_testing_task`       | `DataS3UploadTestingTask`    | Realiza las pruebas unitarias de almacenamiento.                                 |
+| Almacenamiento      | Metadatos de almacenamiento              | `data_s3_upload_metadata_task`      | `UploadMetadataTask`         | Genera los metadatos de `DataS3UploadTask`.                                      |
+| Limpieza            | Limpieza                                 | `clean_data_task`                   | `CleanDataTask`              | Realiza la limpieza de los datos guardados en `DataS3UploadTask`.                |
+| Limpieza            | Pruebas unitarias de limpieza            | `clean_data_test_task`              | `CleanDataTestTask`          | Realiza las pruebas unitarias de limpieza.                                       |
+| Limpieza            | Metadatos limpieza                       | `clean_data_metadata_task`          | `CleanDataMetaTask`          | Genera los metadatos de `CleanDataTask`.                                         |
+| Feature engineering | Feature engineering                      | `feature_engineering_task`          | `FeatureEngineeringTask`     | Genera los features requeridos empleando los datos generados en `CleanDataTask`. |
+| Feature engineering | Pruebas unitarias de feature engineering | `feature_eng_test_task`             | `FeatureEngTestTask`         | Realiza las pruebas unitarias de feature engineering.                            |
+| Feature engineering | Metadatos de feature engineering         | `feature_engineering_metadata_task` | `FeatureEngineeringMetaTask` | Genera los metadatos de `FeatureEngineeringTask`.                                |
+| Predicción          | Predicción de ingesta continua           | `prediction_task`                   | `PredictionTask`             | Realiza las predicciones de la ingesta continua y la almacena en S3              |
+| Predicción          | Pruebas unitarias de predicción          | `prediction_test_task `             | `PredictionTestTask`         | Realiz pruebas unitarias de `PredictionTask`.                                    |
+| Predicción          | Metadatos de predicción                  | `prediction_metadata_task`          | `PredictionMetaTask`         | Genera los metadatos de `PredictionTask`.                                        |
+| API                 | Almacenamiento en DB de API              | `api_storage_task`                  | `ApiStorageTask`             | Almacena en la base de datos de la API las predicciones.                         |
+| Monitoreo           | Almacenamiento en DB de monitorei        | `monitoring_task`                   | `MonitoringTask`             | Almacena en la base de datos del monitoreo las predicciones.                     |
+
+
+Algunos ejemplos (adecuados para el checkpoint 7) son:
+
+### Ejemplo: Generar metadatos de predicción con ingesta continua del día de *hoy*
+```
+PYTHONPATH='.' luigi --module src.orchestration.prediction_metadata_task PredictionMetaTask --local-scheduler
+```
+
+### Ejemplo: Almacenamiento de predicciones en base de datos de API con ingesta continua del día de *hoy*
 
 ```
-PYTHONPATH='.' luigi --module src.orchestration.aequitas_metadata_task AequitasMetaTask --local-scheduler --query-date 2021-04-20
+PYTHONPATH='.' luigi --module src.orchestration.api_storage_task ApiStorageTask --local-scheduler
+```
+
+### Ejemplo: Almacenamiento de predicciones en base de datos de monitoreo con ingesta continua del 20 de abril de 2021
+
+```
+PYTHONPATH='.' luigi --module src.orchestration.monitoring_task MonitoringTask --local-scheduler --query-date 2021-04-20
 ```
 
 ## Pruebas Unitarias
@@ -385,6 +532,22 @@ PYTHONPATH='.' luigi --module src.orchestration.aequitas_metadata_task AequitasM
 
 Para pruebas rápidas se recomienda no incluir el flag de `--historic` para que el entrenamiento sea más rápido.
 Para producción es obligatorio incluirlo.
+
+### Predicción
+
+Las pruebas unitarias de predicción son las siguientes:
+
+* `test_not_empty`: verifica que se haya generado por lo menos una predicción.
+* `test_labels`: verifica que las etiquetas predichas sean 0 o 1.
+* `test_min_score`: verifica que el score mínimo predicho sea 0.0.
+* `test_max_score`: verifica que el score máximo predicho sea 1.0.
+
+*Nota:* si se solicita un score máximo o mínimo que no se encuentren en el intervalo [0, 1] las pruebas unitarias de
+`test_min_score` y/o `test_max_score` fallarán. Un ejemplo de este caso sería el siguiente comando:
+
+```
+PYTHONPATH='.' luigi --module src.orchestration.prediction_metadata_task PredictionMetaTask --max-desired-score -1.0 --local-scheduler
+```
 
 ## Análisis de sesgo e inequidad
 
